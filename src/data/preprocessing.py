@@ -2,6 +2,7 @@ import os
 import pandas as pd
 from scipy import sparse
 import numpy as np
+import re
 
 def get_count(tp, id):
     playcount_groupbyid = tp[[id]].groupby(id, as_index=False)
@@ -72,4 +73,29 @@ def preprocessing_time(data, time_drop=True):
     if time_drop:
         data.drop(columns=['time'], inplace=True)
 
+    return data
+
+def handle_missing_value(data):
+    '''
+    data : 영화 메타 데이터(director, writer, year, title)를 포함한 데이터 프레임
+    director, writer, year에 대한 결측치 처리 후 반환
+    '''
+    # 'director' 컬럼의 결측치는 'unknown'으로 채우기
+    data['director'] = data['director'].fillna('unknown')
+    
+    # 'writer' 컬럼의 결측치는 'unknown'으로 채우기
+    data['writer'] = data['writer'].fillna('unknown')
+    
+    # 'year' 결측치는 'title' 컬럼의 끝부분에 있는 (year) 부분을 추출해서 채우기
+    def extract_year_from_title(title):
+        '''
+        제목에서 (year) 형태의 개봉 연도를 추출하는 함수
+        '''
+        match = re.search(r'\((\d{4})\)', title)
+        if match:
+            return float(match.group(1))  # 'year'는 float64 타입이므로 변환
+        return None
+    
+    data['year'] = data['year'].fillna(data['title'].apply(extract_year_from_title))
+    
     return data
