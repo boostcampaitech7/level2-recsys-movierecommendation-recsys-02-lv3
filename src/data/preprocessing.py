@@ -55,3 +55,21 @@ def numerize(tp, profile2id, show2id):
     uid = tp['user'].apply(lambda x: profile2id[x])
     sid = tp['item'].apply(lambda x: show2id[x])
     return pd.DataFrame(data={'uid': uid, 'sid': sid}, columns=['uid', 'sid'])
+
+def preprocessing_time(data, time_drop=True):
+    '''
+    data : 'time' 컬럼을 가진 데이터 프레임
+    time 컬럼을 'time_year', 'month', 'day_of_week', 'hour'로 변경하여 데이터 프레임 반환
+    time_drop : 반환 시 time 컬럼을 드랍할 것인지 결정 (default=True)
+    '''
+    data['time'] = pd.to_datetime(data['time'], unit='s', errors='coerce')
+    
+    data['time_year'] = data['time'].dt.year
+    data['month'] = data['time'].dt.month
+    data['day_of_week'] = data['time'].dt.dayofweek  # 0=월요일, 6=일요일
+    data['hour'] = data['time'].dt.hour
+
+    if time_drop:
+        data.drop(columns=['time'], inplace=True)
+
+    return data
