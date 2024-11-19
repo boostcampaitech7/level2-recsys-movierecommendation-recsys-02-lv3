@@ -10,12 +10,14 @@ memo: |-
 #   $ python main.py --config config.yaml --seed 2024
 #   과 같이 실행할 경우 seed는 0이 아닌 2024로 설정됩니다.
 
-checkpoint: 'saved/checkpoints/MultiVAE.pt'   # 예측 시 불러올 모델 경로
+checkpoint: 'saved/checkpoint/MultiVAE.pt'   # 예측 시 불러올 모델 경로
 seed: 0               # 시드 고정
 predict: False
 device: cuda          # 가능한 값 : cpu, cuda, mps
-model: MultiVAE      # 모델 선택
+model: MultiVAE       # 모델 선택
 run_name: '{name} : {model}'
+wandb: False                              # wandb 사용 여부
+wandb_project: 'lv3.movierecommendation'  # wandb 프로젝트 이름
 
 model_args:     # model에 해당하는 파라미터만 실질적으로 사용됩니다.
     MultiVAE:
@@ -26,18 +28,20 @@ model_args:     # model에 해당하는 파라미터만 실질적으로 사용�
 
 dataset:
     data_path: ./data/train/    # 데이터셋 경로
-    valid_ratio: 0.2            # Train / Vaildation split
+    ratio: 0.1                  # Train / Vaildation / Test split
+    test_prop : 0.2
 
 dataloader:
-    batch_size: 500    # 배치 사이즈
-    shuffle: True       # 학습 데이터 셔플 여부
-    num_workers: 0      # 멀티프로세서 수. 0: 메인프로세서만 사용
+    data_path: ./choi/level2-recsys-movierecommendation-recsys-02-lv3/src/data/    # 데이터 load 경로
+    batch_size: 500         # 배치 사이즈
+    shuffle: True           # 학습 데이터 셔플 여부
+    num_workers: 0          # 멀티프로세서 수. 0: 메인프로세서만 사용
 
 optimizer:
     type: Adam      # 사용가능한 optimizer: torch.optim.Optimizer 클래스 (https://pytorch.org/docs/stable/optim.html#algorithms)
     args:           # 사용하고자 하는 클래스의 파라미터를 참고하여 추가해주시면 되며, 관계가 없는 파라미터는 무시됩니다.
         lr: 1e-4           # 예) 모든 옵티마이저에서 사용되는 학습률
-        weight_decay: 1e-3  # 예) Adam 등 / L2 정규화 가중치
+        weight_decay: 0     # 예) Adam 등 / L2 정규화 가중치
         amsgrad: False      # 예) Adam 등 / amsgrad 사용 여부
 
 other_params:

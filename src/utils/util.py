@@ -6,6 +6,8 @@ import time
 from src.models import MultiVAE
 import logging
 import json
+import importlib
+
 
 class Setting:
     @staticmethod
@@ -60,7 +62,7 @@ class Setting:
         '''
         if not os.path.exists(args.train.submit_dir):
             os.makedirs(args.train.submit_dir)
-        filename = os.path.join(args.train.submit_dir, f'/{self.save_time}_{args.model}.csv')
+        filename = os.path.join(args.train.submit_dir, f'{self.save_time}_{args.model}.csv')
         return filename
     
     def make_dir(self,path):
@@ -79,6 +81,27 @@ class Setting:
         else:
             pass
         return path
+    
+    
+    def model_modular(self, args, filename = 'dataset', fun_name = None):
+        model_name = args.model
+        model_folder = os.path.join(args.dataloader.data_path, model_name)
+        module_path = os.path.join(model_folder, f"{model_name}_{filename.lower()}.py")
+        
+        if not os.path.exists(module_path):
+            raise FileNotFoundError(f"Module {filename} not found in {model_folder}.")
+        
+        module_name = f"src.data.{model_name}.{model_name}_{filename.lower()}"
+        module = importlib.import_module(module_name)
+        
+        if fun_name:
+            output = getattr(module, f'{fun_name}')
+        elif fun_name == None:
+            output = getattr(module, f"{model_name}{'Dataset'}")
+        
+        return output
+    
+    
 
 class Logger:
     def __init__(self, args, path):
