@@ -170,6 +170,8 @@ def data_load(args):
     # negative sampling
     data = negative_sampling(data, args[args.model].num_negative)
 
+    total_df = data
+
     # train, valid, test split
     train_df, valid_df, test_df = train_valid_test_split(data)
 
@@ -177,6 +179,7 @@ def data_load(args):
         "train_df": train_df,
         "valid_df": valid_df,
         "test_df": test_df,
+        "total_df": total_df,
         "idx2user": idx2user,
         "idx2item": idx2item,
     }
