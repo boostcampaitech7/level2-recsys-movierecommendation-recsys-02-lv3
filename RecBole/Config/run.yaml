@@ -1,0 +1,15 @@
+# Model의 train, evaluation에 필요한 config
+epochs: 100
+train_batch_size: 1024
+eval_batch_size: 1024
+train_neg_sample_args: ~
+eval_args:
+    group_by: user
+    order: TO
+    split: {"LS": "valid_and_test"}
+    mode: full
+metrics: ['Recall', 'MRR', 'NDCG']
+topk: 10
+valid_metric: Recall@10
+metric_decimal_place: 4
+device: cuda
