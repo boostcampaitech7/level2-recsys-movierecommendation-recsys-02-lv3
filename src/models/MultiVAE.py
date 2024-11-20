@@ -41,7 +41,7 @@ class MultiVAE(nn.Module):
         z = self.reparameterize(mu, logvar)
         output = self.decode(z)
 
-        return output, mu, logvar
+        return (output, mu, logvar)
 
 
     def encode(self, input):

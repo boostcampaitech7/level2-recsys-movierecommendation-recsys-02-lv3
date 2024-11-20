@@ -2,16 +2,12 @@ import argparse
 import ast
 from omegaconf import OmegaConf
 import pandas as pd
-import torch
 import torch.optim as optimizer_module
 import torch.optim.lr_scheduler as scheduler_module
-from src.trainers import train, inference
 import src.models as model_module
-from src.data.dataloader import MultiVAE_DataLoader
-from src.data.dataset import data_load
-import warnings
-from src.utils.util import Setting
-import os
+from src.utils.util import Logger, Setting
+from src.trainers.inference import multivae_predict
+from src.trainers.train import train, test
 
 def main(args):
 
@@ -19,60 +15,91 @@ def main(args):
     ##### Setting
     Setting.seed_everything(args.seed)
     setting = Setting()
-    filename = setting.get_submit_filename(args)
+    
+    
+    if args.predict == False:
+        log_path = setting.get_log_path(args)
+        logger = Logger(args, log_path)
+        logger.save_args()
     
     
     ##### data load    
     print("-"*15 + f"{args.model} Load Data" + "-"*15)
+
+    data = setting.model_modular(args, 'dataset', 'data_load')(args)
     
-    data = data_load(args)
-    loader = MultiVAE_DataLoader(args, data)
-    n_items = len(data['unique_sid'])
-    p_dims = args.model_args[args.model]['p_dims'] + [n_items]
-
-
+    data_loader = setting.model_modular(args, 'dataloader')
+    
+    train_dataset = data_loader(args, data, datatype='train')
+    valid_dataset = data_loader(args, data, datatype='validation')
+    test_dataset = data_loader(args, data, datatype='test')
+    
+    
     ##### model load
     print("-"*15 + f"init {args.model}" + "-"*15)
-    model = getattr(model_module, args.model)(p_dims).to(args.device)
+    model = getattr(model_module, args.model)(args.model_args[args.model]['p_dims'] + [len(data['unique_sid'])]).to(args.device)
 
     ##### running model(train & evaluate & save model)
     print("-"*15 + f"{args.model} TRAINING" + "-"*15)
-    best_model = train.run(args, model, loader, setting)
+    model = train(args, model, train_dataset, valid_dataset, logger, setting)
 
     ##### inference
-    print(f'--------------- {args.model} PREDICT ---------------')
-    train_data = loader.load_data('train', True)
-    predicts = inference.predict(args, model, train_data)
+    print("-"*15 + f"{args.model} PREDICT" + "-"*15)
+    model = test(args, model, test_dataset, setting)
+
 
     ##### save predict
-    print(f'--------------- SAVE {args.model} PREDICT ---------------')
+    print("-"*15 + f"SAVE {args.model} PREDICT" + "-"*15)
+    
+    total_dataset = data_loader(args, data, datatype='total')
+    total_dataset = total_dataset.total_data
+    
+    predicts = multivae_predict(args, model, total_dataset)
+    
     result = pd.DataFrame(predicts, columns=['user', 'item'])
-    result['user'] = result['user'].apply(lambda x : data['id2profile'][x])
-    result['item'] = result['item'].apply(lambda x : data['id2show'][x])
+    result['user'] = result['user'].apply(lambda x : data['idx2user'][x])
+    result['item'] = result['item'].apply(lambda x : data['id2item'][x])
     result = result.sort_values(by='user')
 
-    write_path = os.path.join(filename)
-    result.to_csv(write_path, index=False)
+    filename = setting.get_submit_filename(args)
+    result.to_csv(filename, index=False)
+
+    print('Done!')
+
+
+
+
 
 
 
 if __name__ == "__main__":
 
-    ## 각종 파라미터 세팅
-    
-    parser = argparse.ArgumentParser(description='PyTorch Variational Autoencoders for Collaborative Filtering')
+
+
+    ######################## BASIC ENVIRONMENT SETUP
+    parser = argparse.ArgumentParser(description='parser')
 
     arg = parser.add_argument
-
+    str2dict = lambda x: {k:int(v) for k,v in (i.split(':') for i in x.split(','))}
+    
+    
     arg('--config', '-c', '--c', type=str, 
         help='Configuration 파일을 설정합니다.', required=True)
+    arg('--predict', '-p', '--p', '--pred', type=ast.literal_eval, 
+        help='학습을 생략할지 여부를 설정할 수 있습니다.')
     arg('--model', '-m', '--m', type=str, 
         choices=['MultiVAE'],
         help='학습 및 예측할 모델을 선택할 수 있습니다.')
     arg('--seed', '-s', '--s', type=int,
         help='데이터분할 및 모델 초기화 시 사용할 시드를 설정할 수 있습니다.')
+    arg('--checkpoint', '-ckpt', '--ckpt', type=str, 
+        help='학습을 생략할 때 사용할 모델을 설정할 수 있습니다. 단, 하이퍼파라미터 세팅을 모두 정확하게 입력해야 합니다.')
     arg('--device', '-d', '--d', type=str, 
         choices=['cuda', 'cpu', 'mps'], help='사용할 디바이스를 선택할 수 있습니다.')
+    arg('--wandb', '--w', '-w', type=ast.literal_eval, 
+        help='wandb를 사용할지 여부를 설정할 수 있습니다.')
+    arg('--wandb_project', '--wp', '-wp', type=str,
+        help='wandb 프로젝트 이름을 설정할 수 있습니다.')
     arg('--run_name', '--rn', '-rn', '--r', '-r', type=str,
         help='wandb에서 사용할 run 이름을 설정할 수 있습니다.')
     arg('--model_args', '--ma', '-ma', type=ast.literal_eval)
@@ -85,7 +112,7 @@ if __name__ == "__main__":
     
     args = parser.parse_args()
     
-######################## Config with yaml
+    ######################## Config with yaml
     config_args = OmegaConf.create(vars(args))
     config_yaml = OmegaConf.load(args.config) if args.config else OmegaConf.create()
 
@@ -98,6 +125,9 @@ if __name__ == "__main__":
     if config_yaml.predict == False:
         del config_yaml.checkpoint
     
+        if config_yaml.wandb == False:
+            del config_yaml.wandb_project, config_yaml.run_name
+        
         config_yaml.model_args = OmegaConf.create({config_yaml.model : config_yaml.model_args[config_yaml.model]})
         
         config_yaml.optimizer.args = {k: v for k, v in config_yaml.optimizer.args.items() 
@@ -115,4 +145,22 @@ if __name__ == "__main__":
     # Configuration 콘솔에 출력
     print(OmegaConf.to_yaml(config_yaml))
     
+    
+    ######################## W&B
+    if config_yaml.wandb:
+        import wandb
+        wandb.init(project=config_yaml.wandb_project, 
+                   config=OmegaConf.to_container(config_yaml, resolve=True),
+                   name=config_yaml.run_name if config_yaml.run_name else None,
+                   notes=config_yaml.memo if hasattr(config_yaml, 'memo') else None,
+                   tags=[config_yaml.model],
+                   resume="allow")
+        config_yaml.run_href = wandb.run.get_url()
+
+        wandb.run.log_code("./src")  # src 내의 모든 파일을 업로드. Artifacts에서 확인 가능
+    
+    
     main(config_yaml)
+    
+    if config_yaml.wandb:
+        wandb.finish()
