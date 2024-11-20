@@ -1,4 +1,4 @@
-from preprocessing import handle_missing_value
+from data_handling import handle_missing_value
 import torch.nn as nn
 import pandas as pd
 import numpy as np
