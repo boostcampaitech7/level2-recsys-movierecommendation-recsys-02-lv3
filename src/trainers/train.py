@@ -43,7 +43,7 @@ def train(args, model, train_dataset, valid_dataset, logger, setting):
 
     for epoch in range(1, args.train.epochs + 1):
         model.train()
-        train_loss = 0.0
+        train_loss = batch_train_loss =  0.0
         start_time = time.time()
         
                 
@@ -64,17 +64,18 @@ def train(args, model, train_dataset, valid_dataset, logger, setting):
 
             loss.backward()
             train_loss += loss.item()
+            batch_train_loss += loss.item()
             optimizer.step()
             update_count += 1
 
             if batch_idx % args.other_params.args.log_interval == 0 and batch_idx > 0:
                 elapsed = time.time() - start_time
                 print('| epoch {:3d} | {:4d}/{:4d} batches | ms/batch {:4.2f} | loss {:4.2f}'.format(
-                        epoch, batch_idx, len(range(0, N, args.dataloader.batch_size)),
+                        epoch, batch_idx + 1, len(range(0, N, args.dataloader.batch_size)),
                         elapsed * 1000 / args.other_params.args.log_interval,
-                        train_loss / args.other_params.args.log_interval))
+                        batch_train_loss / args.other_params.args.log_interval))
                 start_time = time.time()
-                train_loss = 0.0
+                batch_train_loss = 0.0
 
         if args.lr_scheduler.use and args.lr_scheduler.type != 'ReduceLROnPlateau':
             lr_scheduler.step()
