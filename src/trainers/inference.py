@@ -26,8 +26,7 @@ def multivae_predict(args, model, data, k = 10):
         predicts = predicts[0]
         predicts[data.nonzero()] = -np.inf
         
-        # _ , top_ids = torch.topk(torch.from_numpy(predicts).float().to(args.device), k, dim=1)
-        _  , top_ids = torch.topk(predicts, k, dim=1)
+        _  , top_ids = torch.topk(predicts.to(args.device).float(), k, dim=1)
         for user_id, item_ids in enumerate(top_ids):
             for item_id in item_ids:
                 top_items.append((user_id, item_id.item()))
