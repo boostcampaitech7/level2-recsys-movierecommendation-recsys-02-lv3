@@ -13,7 +13,7 @@ from tqdm import tqdm
 
 update_count = 0
 
-def train(args, model, train_dataset, valid_dataset, setting):
+def train(args, model, train_dataset, valid_dataset, logger, setting):
     
     # Optimizer and Scheduler 설정
     trainable_params = filter(lambda p: p.requires_grad, model.parameters())
@@ -70,7 +70,7 @@ def train(args, model, train_dataset, valid_dataset, setting):
             if batch_idx % args.other_params.args.log_interval == 0 and batch_idx > 0:
                 elapsed = time.time() - start_time
                 print('| epoch {:3d} | {:4d}/{:4d} batches | ms/batch {:4.2f} | loss {:4.2f}'.format(
-                        args.epoch, batch_idx, len(range(0, N, args.dataloader.batch_size)),
+                        epoch, batch_idx, len(range(0, N, args.dataloader.batch_size)),
                         elapsed * 1000 / args.other_params.args.log_interval,
                         train_loss / args.other_params.args.log_interval))
                 start_time = time.time()
@@ -92,10 +92,10 @@ def train(args, model, train_dataset, valid_dataset, setting):
         print('-' * 89)
         print(msg)
         print('-' * 89)
-        
+        logger.log(epoch=epoch, train_loss=train_loss, valid_loss=valid_loss, valid_r10=r10)
         # wandb logging
         if args.wandb:
-            wandb.log({'Epoch': epoch+1,
+            wandb.log({'Epoch': epoch,
                        'Train Loss': train_loss,
                        'Valid Loss': valid_loss,
                        'Recall@10': r10})
@@ -109,6 +109,8 @@ def train(args, model, train_dataset, valid_dataset, setting):
         else:
             os.makedirs(args.train.ckpt_dir, exist_ok=True)
             torch.save(model.state_dict(), f'{args.train.ckpt_dir}/{setting.save_time}_{args.model}_e{epoch:02}.pt')        
+            
+    logger.close()       
             
     return model
 

@@ -45,7 +45,9 @@ class Setting:
         path : log file을 저장할 경로를 반환합니다.
         이 때, 경로는 log/날짜_시간_모델명/ 입니다.
         '''
-        path = f'./log/{self.save_time}_{args.model}/'
+        path = os.path.join(args.train.log_dir, f'{self.save_time}_{args.model}/')
+        self.make_dir(path)
+        
         return path
 
     def get_submit_filename(self, args):
@@ -124,7 +126,7 @@ class Logger:
         self.file_handler.setFormatter(self.formatter)
         self.logger.addHandler(self.file_handler)
 
-    def log(self, epoch, train_loss, valid_loss):
+    def log(self, epoch, train_loss, valid_loss, valid_r10):
         '''
         [description]
         log file에 epoch, train loss, valid loss를 기록하는 함수입니다.
@@ -135,7 +137,7 @@ class Logger:
         train_loss : train loss
         valid_loss : valid loss
         '''
-        message = f'epoch : {epoch}/{self.args.epochs} | train loss : {train_loss:.3f} | valid loss : {valid_loss:.3f}'
+        message = f'epoch : {epoch}/{self.args.train.epochs} | train loss : {train_loss:.3f} | valid loss : {valid_loss:.3f} | valid_r10 : {valid_r10: .3f}'
         self.logger.info(message)
     
     def close(self):
@@ -153,9 +155,25 @@ class Logger:
         이 때, 저장되는 파일명은 model.json으로 저장됩니다.
         '''
         argparse_dict = self.args.__dict__
+        if '_content' in argparse_dict:
+            content_dict = argparse_dict['_content']  # '_content' 부분만 추출
+        else:
+            raise KeyError("'_content' key not found in args. Please check the structure of args.")
+        
+        # 직렬화 불가능한 객체를 걸러내기 위한 함수
+        def _json_serializable(obj):
+            try:
+                json.dumps(obj)
+                return True
+            except TypeError:
+                return False
 
+        # 직렬화가 가능한 항목만 필터링
+        content_dict_serializable = {key: value for key, value in content_dict.items() if _json_serializable(value)}
+
+        # JSON 파일로 저장
         with open(f'{self.path}/model.json', 'w') as f:
-            json.dump(argparse_dict,f,indent=4)
+            json.dump(content_dict_serializable, f, indent=4)
 
     def __del__(self):
         self.close()
