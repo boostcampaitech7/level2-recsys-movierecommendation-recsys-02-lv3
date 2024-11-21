@@ -1,8 +1,17 @@
-# Model의 train, evaluation에 필요한 parameter config
-epochs: 10
-train_batch_size: 1024
-eval_batch_size: 1024
+### Model의 train, evaluation에 필요한 parameter config ###
+########################################################
+epochs: 100
+train_batch_size: 2048
+eval_batch_size: 2048
+
+# [learner] choice: ['adam', 'sgd', 'adagrad', 'rmsprop', 'sparse_adam']
+learner: 'adam'
+learning_rate: 1e-4 
+# [stopping_step]: early stopping threshold
+stopping_step: 10
 train_neg_sample_args: ~
+
+# [eval_args.split]: leave-one-out data splitting
 eval_args:
     group_by: user
     order: TO
