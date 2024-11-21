@@ -34,14 +34,18 @@ def train(config,logger):
     best_valid_score, best_valid_result = trainer.fit(train_data=tr_data,valid_data=val_data)
 
     print("==== train end! ====")
-    logger.info(f"best valid score: {best_valid_score}")
-    logger.info(f"best valid result: {best_valid_result}")
+    
+    logger.log(f"best valid score: {best_valid_score}")
+    logger.log(f"best valid result: {best_valid_result}")
     print(f"best valid score & result: {best_valid_score}, {best_valid_result}")
     
     print("==== evaluation start ====")
     test_result = trainer.evaluate(te_data)
-    logger.info(f"test result: {test_result}")
+    
+    logger.log(f"test result: {test_result}")
     print(f"test_result: {test_result}")
+    
+    logger.close()
 
 
 if __name__ == "__main__":
