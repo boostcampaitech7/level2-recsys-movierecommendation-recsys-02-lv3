@@ -15,7 +15,8 @@ seed: 0               # 시드 고정
 predict: False
 device: cuda          # 가능한 값 : cpu, cuda, mps
 model: DeepFM      # 모델 선택
-run_name: '{name} : {model}'
+wandb_project: 'lv2.movie_recommendation'
+run_name: 'jinnk0 : DeepFM'
 
 model_args:     # model에 해당하는 파라미터만 실질적으로 사용됩니다.
     MultiVAE:
@@ -24,7 +25,7 @@ model_args:     # model에 해당하는 파라미터만 실질적으로 사용�
     DeepFM:
         embed_dim: 16
         num_negative: 50
-        mlp_dims: [30, 20, 10]
+        mlp_dims: [128, 64, 32]
         drop_rate: 0.1
 
 
@@ -34,14 +35,15 @@ dataset:
     valid_ratio: 0.2            # Train / Vaildation split
 
 dataloader:
-    batch_size: 500    # 배치 사이즈
+    data_path: ./src/data/
+    batch_size: 1024    # 배치 사이즈
     shuffle: True       # 학습 데이터 셔플 여부
     num_workers: 0      # 멀티프로세서 수. 0: 메인프로세서만 사용
 
 optimizer:
     type: Adam      # 사용가능한 optimizer: torch.optim.Optimizer 클래스 (https://pytorch.org/docs/stable/optim.html#algorithms)
     args:           # 사용하고자 하는 클래스의 파라미터를 참고하여 추가해주시면 되며, 관계가 없는 파라미터는 무시됩니다.
-        lr: 1e-4           # 예) 모든 옵티마이저에서 사용되는 학습률
+        lr: 1e-3           # 예) 모든 옵티마이저에서 사용되는 학습률
         weight_decay: 1e-3  # 예) Adam 등 / L2 정규화 가중치
         amsgrad: False      # 예) Adam 등 / amsgrad 사용 여부
 
@@ -74,4 +76,4 @@ train:
     submit_dir: saved/submit            # 예측 저장 경로
     save_best_model: True               # True: val_loss가 최소인 모델 저장 / False: 모든 모델 저장
     resume: False                               # 이어서 학습할 경우 True
-    resume_path: saved/checkpoint/MultiVAE.pt    # 이어서 학습할 모델 경로
+    resume_path: saved/checkpoint/~.pt    # 이어서 학습할 모델 경로

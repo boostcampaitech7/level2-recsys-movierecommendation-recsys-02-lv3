@@ -1,8 +1,8 @@
-from data_handling import handle_missing_value
-import torch.nn as nn
+import torch
 import pandas as pd
 import numpy as np
-import tqdm
+from tqdm import tqdm
+import re
 
 
 def encoding(data, type):
@@ -19,14 +19,14 @@ def encoding(data, type):
 
     if is_list_column:  # 컬럼 값이 리스트인 경우
         # 유니크한 값 추출
-        unique_values = set(val for sublist in data for val in sublist)
+        unique_values = set(data.explode(type)[type])
         encoding_dict = {value: i for i, value in enumerate(unique_values)}
 
         # 리스트 내부 각 요소를 인코딩
         data[type] = data[type].map(lambda x: [encoding_dict[val] for val in x])
 
     else:  # 컬럼 값이 일반 문자열(혹은 단일 값)인 경우
-        encoding_dict = {value: i for i, value in enumerate(set(data))}
+        encoding_dict = {value: i for i, value in enumerate(set(data["director"]))}
         data[type] = data[type].map(lambda x: encoding_dict[x])
 
     return data
@@ -40,7 +40,19 @@ def negative_sampling(data, num_negative):
     """
     user_group_dfs = list(data.groupby("user")["item"])
     items = set(data["item"])
-    item_metadata = data[["item", "genre", "director", "year"]].drop_duplicates()
+
+    # item_metadata에서 genre는 그대로 리스트로 두고 다른 메타데이터는 중복 제거
+    item_metadata = (
+        data.groupby("item")
+        .agg(
+            {
+                "director": "first",  # 첫 번째 감독 정보 사용
+                "year": "first",  # 첫 번째 년도 정보 사용
+                "genre": "first",  # genre는 리스트 그대로 유지
+            }
+        )
+        .reset_index()
+    )
 
     print("-----negative sampling-----")
     user_neg_dfs = []
@@ -56,6 +68,7 @@ def negative_sampling(data, num_negative):
                 "interaction": [0] * num_negative,
             }
         )
+        # 메타데이터와 결합
         i_user_neg_df = i_user_neg_df.merge(item_metadata, on="item", how="left")
         user_neg_dfs.append(i_user_neg_df)
 
@@ -76,12 +89,12 @@ def zero_based_index_mapping(data):
 
     if len(users) - 1 != max(users):
         users_dict = {users[i]: i for i in range(len(users))}
-        idx2users = {i: users[i] for users[i], i in users_dict}
+        idx2users = {i: users for users, i in users_dict.items()}
         data["user"] = data["user"].map(lambda x: users_dict[x])
 
     if len(items) - 1 != max(items):
         items_dict = {items[i]: i for i in range(len(items))}
-        idx2items = {i: items[i] for items[i], i in items_dict}
+        idx2items = {i: items for items, i in items_dict.items()}
         data["item"] = data["item"].map(lambda x: items_dict[x])
 
     data = data.sort_values(by=["user"])
@@ -103,19 +116,51 @@ def train_valid_test_split(data):
     test_data = []
 
     for user, group in data_positive.groupby("user"):
-        train_data.append(group.iloc[:-2])
-        valid_data.append(group.iloc[-2:-1])
-        test_data.append(group.iloc[-1:])
+        if len(group) > 1:  # 최소 2개의 상호작용이 있어야 valid, test로 분할 가능
+            train_data.append(group.iloc[:-2])  # 마지막 두 개를 제외한 나머지
+            valid_data.append(group.iloc[-2:-1])  # 마지막에서 두 번째를 valid
+            test_data.append(group.iloc[-1:])  # 마지막 상호작용을 test
+        else:
+            # 상호작용이 하나만 있는 경우는 모두 train으로만 사용
+            train_data.append(group)
 
     train_df = pd.concat(train_data)
-    valid_df = pd.concat(valid_data)
-    test_df = pd.concat(test_data)
+    valid_df = (
+        pd.concat(valid_data) if valid_data else pd.DataFrame(columns=data.columns)
+    )
+    test_df = pd.concat(test_data) if test_data else pd.DataFrame(columns=data.columns)
 
     # interaction이 0인 데이터는 train에만 포함
     data_negative = data[data["interaction"] == 0]
     train_df = pd.concat([train_df, data_negative])
 
     return train_df, valid_df, test_df
+
+
+def handle_missing_value(data):
+    """
+    data : 영화 메타 데이터(director, writer, year, title)를 포함한 데이터 프레임
+    director, writer, year에 대한 결측치 처리 후 반환
+    """
+    # 'director' 컬럼의 결측치는 'unknown'으로 채우기
+    data["director"] = data["director"].fillna("unknown")
+
+    # 'writer' 컬럼의 결측치는 'unknown'으로 채우기
+    data["writer"] = data["writer"].fillna("unknown")
+
+    # 'year' 결측치는 'title' 컬럼의 끝부분에 있는 (year) 부분을 추출해서 채우기
+    def extract_year_from_title(title):
+        """
+        제목에서 (year) 형태의 개봉 연도를 추출하는 함수
+        """
+        match = re.search(r"\((\d{4})\)", title)
+        if match:
+            return float(match.group(1))  # 'year'는 float64 타입이므로 변환
+        return None
+
+    data["year"] = data["year"].fillna(data["title"].apply(extract_year_from_title))
+
+    return data
 
 
 def data_load(args):
@@ -155,7 +200,7 @@ def data_load(args):
         result_df = pd.merge(result_df, df, on="item", how="left")
 
     # 결측치 처리 후 사용하지 않을 컬럼 drop
-    data = handle_missing_value(result_df).drop(columns=["writer", "title"])
+    data = handle_missing_value(result_df).drop(columns=["writer", "title", "time"])
 
     # 'genre', 'director' 컬럼 임베딩 전 label encoding
     data = encoding(data, "genre")
@@ -168,7 +213,7 @@ def data_load(args):
     data["interaction"] = 1.0
 
     # negative sampling
-    data = negative_sampling(data, args[args.model].num_negative)
+    # data = negative_sampling(data, args.model_args[args.model].num_negative)
 
     total_df = data
 
@@ -182,6 +227,10 @@ def data_load(args):
         "total_df": total_df,
         "idx2user": idx2user,
         "idx2item": idx2item,
+        "num_users": total_df["user"].nunique(),
+        "num_items": total_df["item"].nunique(),
+        "num_genres": total_df.explode("genre")["genre"].nunique(),
+        "num_directors": total_df["director"].nunique(),
     }
 
     return data
