@@ -65,7 +65,7 @@ if __name__ == "__main__":
 
     config = Config(model=args.model, config_file_list=['Config/run.yaml', 'Config/setting.yaml'])
     config['checkpoint_dir'] = os.path.join(
-        config['checkpoint_dir']+args.model+args.cur
+        config['checkpoint_dir']+args.model+'_'+args.cur
     )
 
     generate_data(args=args, config=config)
