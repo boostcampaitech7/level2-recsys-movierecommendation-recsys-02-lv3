@@ -1,5 +1,6 @@
 import argparse
-import yaml
+import os
+from omegaconf import OmegaConf
 
 from recbole.config import Config
 from recbole.quick_start import load_data_and_model
@@ -11,7 +12,8 @@ import numpy as np
 import pandas as pd
 
 def inference(args, config):
-    tr_data, val_data, te_data = get_data(config)
+    _, _, te_data = get_data(config)
+
     (
         inference_config,
         model,
@@ -19,7 +21,10 @@ def inference(args, config):
         _,
         _,
         _,
-    ) = load_data_and_model(args.checkpoint_path)
+    ) = load_data_and_model(
+        os.path.join(
+            args.root_dir,args.train.ckpt_dir,args.ckpt_file
+    ))
     
     user_id2token = inference_dataset.field2id_token['user_id']
     item_id2token = inference_dataset.field2id_token['item_id']
@@ -59,32 +64,52 @@ def inference(args, config):
                 )
             )
 
-    print(f"generate submission file at {args.submit_dir}{args.model}.csv")
+    print(f"generate submission file at {args.train.submit_dir}/{args.model}.csv")
+
     result = pd.DataFrame(result, columns = ["user", "item", "score"])
     result.drop(columns=['score'],inplace=True)
+    
     result.to_csv(
-        f"{args.submit_dir}{args.model}.csv", index=False
+        f"{args.train.submit_dir}{args.model}.csv", index=False
     )
 
 if __name__=="__main__":
     parser = argparse.ArgumentParser()
+
     arg = parser.add_argument
+    arg("--config", 
+        "-c",
+        help='Configuration 파일을 설정합니다.',
+        default='../configs/config.yaml'
+    )
+    arg("--root_dir",
+        "-r",
+        type=str,
+        default='/data/ephemeral/home/'
+    )
     arg("--model",
         "-m",
         type=str,
         help="name of recommender"
     )
-    arg("--checkpoint_path",
-        "-c",
+    arg("--ckpt_file",
+        "-ck",
         type=str,
         help='loads the checkpoint of trained model'
     )
-    arg("--submit_dir",
-        "-s",
-        type=str,
-        default="./submit/"
-    )
     args = parser.parse_args()
-    config = Config(model=args.model, config_file_list=['Config/run.yaml', 'Config/setting.yaml'])
 
+    #### Config with yaml
+    config_args = OmegaConf.create(vars(args))
+    config_yaml = OmegaConf.load(args.config) if args.config else OmegaConf.create()
+
+    # args에 있는 값이 config_yaml에 있는 값보다 우선함. (단, None이 아닌 값일 경우)
+    for key in config_args.keys():
+        if config_args[key] is not None:
+            config_yaml[key] = config_args[key]
+    args = config_yaml
+
+    config = Config(model=args.model, config_file_list=['../configs/recbole_model.yaml', '../configs/recbole_setting.yaml'])
+
+    #args: 기본 arg, config: RecBole config
     inference(args, config)

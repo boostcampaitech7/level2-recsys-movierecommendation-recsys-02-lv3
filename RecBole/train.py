@@ -34,15 +34,11 @@ def train(config,logger):
     best_valid_score, best_valid_result = trainer.fit(train_data=tr_data,valid_data=val_data)
 
     print("==== train end! ====")
-    
-    logger.log(f"best valid score: {best_valid_score}")
-    logger.log(f"best valid result: {best_valid_result}")
     print(f"best valid score & result: {best_valid_score}, {best_valid_result}")
     
     print("==== evaluation start ====")
     test_result = trainer.evaluate(te_data)
     
-    logger.log(f"test result: {test_result}")
     print(f"test_result: {test_result}")
     
     logger.close()
@@ -110,7 +106,7 @@ if __name__ == "__main__":
     config = Config(model=args.model, config_file_list=['../configs/recbole_model.yaml', '../configs/recbole_setting.yaml'])
 
     config['checkpoint_dir'] = os.path.join(
-        args.root_dir,args.train.ckpt_dir,args.model+'_'+args.cur
+        args.root_dir,args.train.ckpt_dir,args.model
     )
     print(config)    
     generate_data(args=args, config=config)
