@@ -3,16 +3,22 @@ import os
 
 from recbole.data import create_dataset, data_preparation
 
-def generate_data(args):
+def get_data(config):
+    dataset = create_dataset(config)
+    train_data, valid_data, test_data = data_preparation(config=config, dataset=dataset)
+    return train_data, valid_data, test_data
+
+def generate_data(args, config):
     '''
     dataframe 불러와서 전처리 통해 result_df 만드는 과정은 추후 전처리 함수로 수정할 예정
-    args: setting.yaml
+    args: 데이터가 저장된 가장 상위 경로를 불러옵니다.
+    config: RecBole에서 활용하는 데이터가 저장될 경로를 setting.yaml로부터 불러옵니다.
     '''
-    recbole_data_path = './data/movie_rec/'
-    if os.path.exists(recbole_data_path):
+    print(config['data_path'])
+    if os.path.exists(config['data_path']):
         pass
     else:
-        os.makedirs(recbole_data_path)
+        print("==== generating data ====")
         rating_df = pd.read_csv(args.data_path + 'train_ratings.csv')
         directors_df = pd.read_csv(args.data_path + 'directors.tsv', delimiter='\t')
         genres_df = pd.read_csv(args.data_path + 'genres.tsv', delimiter='\t')
@@ -41,5 +47,7 @@ def generate_data(args):
                                                                            'year':'release_year:token', 
                                                                            'genre':'genre:token_seq'})
         
-        rating_df.to_csv('./recbox_data/recbox_data.inter', index=False, sep='\t')
-        item_df.to_csv('./recbox_data/recbox_data.item', index=False, sep='\t')
+        recbole_data_path, recbole_data_name = config['data_path'], config['dataset']
+        os.makedirs(recbole_data_path)
+        rating_df.to_csv(f'{recbole_data_path}/{recbole_data_name}.inter', index=False, sep='\t')
+        item_df.to_csv(f'{recbole_data_path}/{recbole_data_name}.item', index=False, sep='\t')
