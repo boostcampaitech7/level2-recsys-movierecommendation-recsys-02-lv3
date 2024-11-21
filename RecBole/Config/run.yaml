@@ -1,4 +1,4 @@
-# Model의 train, evaluation에 필요한 config
+# Model의 train, evaluation에 필요한 parameter config
 epochs: 100
 train_batch_size: 1024
 eval_batch_size: 1024
