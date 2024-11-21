@@ -14,6 +14,9 @@ class DeepFM_DataLoader(Dataset):
         self.dense_cols = ["year"]  # scaling으로 처리할 연속형 변수
         self.scaler = MinMaxScaler().fit(data["total_df"][self.dense_cols])
         self.num_genres = data["total_df"].explode("genre")["genre"].nunique()
+        self.num_users = data["total_df"]["user"].nunique()
+        self.num_items = data["total_df"]["item"].nunique()
+        self.num_directors = data["total_df"]["director"].nunique()
 
         # 데이터셋 설정
         if self.datatype == "train":
