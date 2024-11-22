@@ -5,7 +5,8 @@ class EASEDataset:
     '''
     Sparse Matrix Dataset for training, validation, and test data
     '''
-    def __init__(self, data, datatype='train'):
+    def __init__(self, args, data, datatype='train'):
+        self.args = args
         self.data = data
         self.datatype = datatype
         self.n_items = len(data['unique_sid'])
