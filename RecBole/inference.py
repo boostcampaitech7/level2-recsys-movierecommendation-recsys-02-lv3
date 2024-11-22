@@ -11,6 +11,7 @@ import torch
 import numpy as np
 import pandas as pd
 
+
 def inference(args, config):
     _, _, te_data = get_data(config)
 
@@ -45,13 +46,19 @@ def inference(args, config):
             10,
             device='cuda',
         )
-    pred_list = batch_pred_list.clone().detach().cpu().numpy()
-    pred_scores = batch_pred_scores.clone().detach().cpu().numpy()
-    user_list = user.numpy()
 
-    pred_list = np.append(pred_list, batch_pred_list, axis=0)
-    pred_scores = np.append(pred_scores, batch_pred_scores, axis=0)
-    user_list = np.append(user_list, user.numpy(), axis=0)
+    batch_pred_list = batch_pred_list.clone().detach().cpu().numpy()
+    batch_pred_scores = batch_pred_scores.clone().detach().cpu().numpy()
+
+    
+    if pred_list is None:
+        pred_list = batch_pred_list
+        pred_scores = batch_pred_scores
+        user_list = user.numpy()
+    else:
+        pred_list = np.append(pred_list, batch_pred_list, axis=0)
+        pred_scores = np.append(pred_scores, batch_pred_scores, axis=0)
+        user_list = np.append(user_list, user.numpy(), axis=0)
 
     result = []
     for user, pred, score in zip(user_list, pred_list, pred_scores):
@@ -70,7 +77,7 @@ def inference(args, config):
     result.drop(columns=['score'],inplace=True)
     
     result.to_csv(
-        f"{args.train.submit_dir}{args.model}.csv", index=False
+        f"{args.root_dir}{args.train.submit_dir}/{args.model}.csv", index=False
     )
 
 if __name__=="__main__":
@@ -109,7 +116,7 @@ if __name__=="__main__":
             config_yaml[key] = config_args[key]
     args = config_yaml
 
+    #### set config and args
     config = Config(model=args.model, config_file_list=['../configs/recbole_model.yaml', '../configs/recbole_setting.yaml'])
 
-    #args: 기본 arg, config: RecBole config
     inference(args, config)
