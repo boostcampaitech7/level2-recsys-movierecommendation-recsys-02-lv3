@@ -6,8 +6,11 @@ import torch.optim as optimizer_module
 import torch.optim.lr_scheduler as scheduler_module
 import src.models as model_module
 from src.utils.util import Logger, Setting
-from src.trainers.inference import multivae_predict
+from src.trainers.inference import deepfm_predict
 from src.trainers.DeepFM_train import train, evaluate, test
+from src.data.DeepFM.DeepFM_dataset import train_valid_test_split
+import torch
+import os
 
 
 def main(args):
@@ -25,43 +28,41 @@ def main(args):
     print("-" * 15 + f"{args.model} Load Data" + "-" * 15)
 
     data = setting.model_modular(args, "dataset", "data_load")(args)
-    print("get data")
+
+    data_X = data["result_df"].drop("interaction", axis=1)
+    data_y = data["result_df"]["interaction"]
+
+    X = torch.tensor(data_X.values).to(args.device)
+    y = torch.tensor(data_y.values).to(args.device)
 
     data_loader = setting.model_modular(args, "dataloader")
-    print("get dataloader")
 
-    train_dataset = data_loader(args, data, datatype="train")
-    print("get train_dataset")
-    valid_dataset = data_loader(args, data, datatype="valid")
-    print("get valid_dataset")
-    test_dataset = data_loader(args, data, datatype="test")
-    print("get test_dataset")
-    # total_dataset = data_loader(args, data, datatype='total')
-    # print("get total_dataset")
+    dataset = data_loader(args, X, y)
+    train_dataset, valid_dataset, test_dataset = train_valid_test_split(dataset)
 
     ##### model load
     print("-" * 15 + f"init {args.model}" + "-" * 15)
-    model = getattr(model_module, args.model)(args, data).to(args.device)
+    model = getattr(model_module, args.model)(args, data["field_dims"]).to(args.device)
 
     ##### running model(train & evaluate & save model)
     print("-" * 15 + f"{args.model} TRAINING" + "-" * 15)
-    model = train(args, model, train_dataset, valid_dataset, logger, setting)
+    best_model = train(args, model, train_dataset, valid_dataset, logger, setting)
 
     ##### inference
     print("-" * 15 + f"{args.model} PREDICT" + "-" * 15)
-    model = test(args, model, test_dataset, setting)
+    model = test(args, best_model, test_dataset, setting)
 
     ##### save predict
     print("-" * 15 + f"SAVE {args.model} PREDICT" + "-" * 15)
 
-    total_dataset = data_loader(args, data, datatype="total")
-    total_dataset = total_dataset.total_data
-
-    predicts = multivae_predict(args, model, total_dataset)
+    total_dataset = pd.read_csv(
+        os.path.join(args.dataset.data_path, "train_ratings.csv")
+    )
+    predicts = deepfm_predict(args, best_model, total_dataset, data["idx_dict"])
 
     result = pd.DataFrame(predicts, columns=["user", "item"])
     result["user"] = result["user"].apply(lambda x: data["idx2user"][x])
-    result["item"] = result["item"].apply(lambda x: data["id2item"][x])
+    result["item"] = result["item"].apply(lambda x: data["idx2item"][x])
     result = result.sort_values(by="user")
 
     filename = setting.get_submit_filename(args)

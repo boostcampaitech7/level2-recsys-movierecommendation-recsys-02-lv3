@@ -1,63 +1,181 @@
-import torch
+import os
 import pandas as pd
 import numpy as np
 from tqdm import tqdm
 import re
+import torch
 
 
-def encoding(data, type):
+def mapping(data):
     """
-    object 타입의 컬럼들을 label encoding으로 변환
+    데이터프레임의 컬럼값들을 0부터 시작하는 인덱스로 mapping
 
     parameters
     ----------
-    data : encoding할 type 컬럼이 포함된 데이터 프레임
-    type : 컬럼명(ex. 'genre', 'director', 'writer' 등)
+    data : 'user', 'item', 'genre', 'director', 'writer', 'title', 'year' 컬럼을 포함하는 데이터 프레임
+
+    returns
+    -------
+    data : mapping된 데이터 프레임
+    field_dims : 각 컬럼들의 고유값 차원 수
+    idx2user : mapping된 user를 다시 원래대로 되돌리기 위한 dict
+    idx2item : mapping된 item을 다시 원래대로 되돌리기 위한 dict
+    idx_dict : 각 컬럼을 mapping하기 위한 dict들
     """
-    # 리스트인지 확인
-    is_list_column = isinstance(data[type].iloc[0], list) if not data.empty else False
+    offset = 0  # mapping 시작 인덱스
+    user2idx = {user: idx for idx, user in enumerate(data["user"].unique(), offset)}
+    data["user"] = data["user"].map(user2idx)
 
-    if is_list_column:  # 컬럼 값이 리스트인 경우
-        # 유니크한 값 추출
-        unique_values = set(data.explode(type)[type])
-        encoding_dict = {value: i for i, value in enumerate(unique_values)}
+    offset += len(user2idx)  # 시작 인덱스 갱신
+    item2idx = {item: idx for idx, item in enumerate(data["item"].unique(), offset)}
+    data["item"] = data["item"].map(item2idx)
 
-        # 리스트 내부 각 요소를 인코딩
-        data[type] = data[type].map(lambda x: [encoding_dict[val] for val in x])
+    offset += len(item2idx)
+    genre2idx = {genre: idx for idx, genre in enumerate(data["genre"].unique(), offset)}
+    data["genre"] = data["genre"].map(genre2idx)
 
-    else:  # 컬럼 값이 일반 문자열(혹은 단일 값)인 경우
-        encoding_dict = {value: i for i, value in enumerate(set(data["director"]))}
-        data[type] = data[type].map(lambda x: encoding_dict[x])
+    offset += len(genre2idx)
+    director2idx = {
+        director: idx for idx, director in enumerate(data["director"].unique(), offset)
+    }
+    data["director"] = data["director"].map(director2idx)
 
-    return data
+    offset += len(director2idx)
+    writer2idx = {
+        writer: idx for idx, writer in enumerate(data["writer"].unique(), offset)
+    }
+    data["writer"] = data["writer"].map(writer2idx)
+
+    offset += len(writer2idx)
+    title2idx = {title: idx for idx, title in enumerate(data["title"].unique(), offset)}
+    data["title"] = data["title"].map(title2idx)
+
+    offset += len(title2idx)
+    year2idx = {year: idx for idx, year in enumerate(data["year"].unique(), offset)}
+    data["year"] = data["year"].map(year2idx)
+
+    field_dims = np.array(
+        [
+            len(user2idx),
+            len(item2idx),
+            len(genre2idx),
+            len(director2idx),
+            len(writer2idx),
+            len(title2idx),
+            len(year2idx),
+        ]
+    )
+
+    idx2user = {idx: user for user, idx in user2idx.items()}
+    idx2item = {idx: item for item, idx in item2idx.items()}
+
+    data = data.sort_values(by=["user"])
+    data.reset_index(drop=True, inplace=True)
+
+    idx_dict = {
+        "user2idx": user2idx,
+        "item2idx": item2idx,
+        "genre2idx": genre2idx,
+        "writer2idx": writer2idx,
+        "director2idx": director2idx,
+        "year2idx": year2idx,
+        "title2idx": title2idx,
+    }
+
+    return data, field_dims, idx2user, idx2item, idx_dict
 
 
-def negative_sampling(data, num_negative):
+def inference_mapping(data, idx_dict, args):
+    """
+    최종 예측 값을 만들기 위한 데이터 프레임을 메타 데이터와 병합
+
+    parameters
+    ----------
+    data : 예측할 batch_size 단위의 user와 모든 item
+    idx_dict : 각 컬럼들을 mapping하기 위한 dict
+
+    returns
+    -------
+    주어진 batch_size에 맞게 메타 데이터를 병합하고 tensor로 변환하여 반환
+    """
+    # 데이터 경로 선언
+    path = args.dataset.data_path
+
+    genre_data = os.path.join(path, "genres.tsv")
+    writer_data = os.path.join(path, "writers.tsv")
+    director_data = os.path.join(path, "directors.tsv")
+    year_data = os.path.join(path, "years.tsv")
+    title_data = os.path.join(path, "titles.tsv")
+
+    # 데이터 불러오기
+    genre_df = pd.read_csv(genre_data, sep="\t")
+    genre_df = genre_df.drop_duplicates(subset=["item"])  # 중복 제거
+    writer_df = pd.read_csv(writer_data, sep="\t")
+    writer_df = writer_df.drop_duplicates(subset=["item"])  # 중복 제거
+    director_df = pd.read_csv(director_data, sep="\t")
+    year_df = pd.read_csv(year_data, sep="\t")
+    title_df = pd.read_csv(title_data, sep="\t")
+
+    data["item"] = data["item"].astype("int")
+
+    merged_data = pd.merge(data, genre_df, left_on="item", right_on="item", how="left")
+    del data, genre_df  # 병합 완료된 데이터 프레임 메모리에서 삭제
+    merged_data = pd.merge(
+        merged_data, writer_df, left_on="item", right_on="item", how="left"
+    )
+    del writer_df
+    merged_data = pd.merge(
+        merged_data, year_df, left_on="item", right_on="item", how="left"
+    )
+    del year_df
+    merged_data = pd.merge(
+        merged_data, director_df, left_on="item", right_on="item", how="left"
+    )
+    del director_df
+    merged_data = pd.merge(
+        merged_data, title_df, left_on="item", right_on="item", how="left"
+    )
+    del title_df
+    merged_data = handle_missing_value(merged_data)
+
+    # user는 이미 임베딩되어 있는 상태
+    merged_data["item"] = merged_data["item"].map(idx_dict["item2idx"])
+    merged_data["genre"] = merged_data["genre"].map(idx_dict["genre2idx"])
+    merged_data["writer"] = (
+        merged_data["writer"].astype("string").map(idx_dict["writer2idx"])
+    )
+    merged_data["director"] = (
+        merged_data["director"].astype("string").map(idx_dict["director2idx"])
+    )
+    merged_data["year"] = merged_data["year"].map(idx_dict["year2idx"])
+    merged_data["title"] = (
+        merged_data["title"].astype("string").map(idx_dict["title2idx"])
+    )
+
+    return torch.tensor(merged_data.values).long().to(args.device)
+
+
+def negative_sampling(data, items):
     """
     Parameters
     ----------
     data : 'user', 'item'의 interaction이 포함된 데이터 프레임
+    items : 전체 데이터셋의 고유 아이템 리스트
     """
     user_group_dfs = list(data.groupby("user")["item"])
-    items = set(data["item"])
-
-    # item_metadata에서 genre는 그대로 리스트로 두고 다른 메타데이터는 중복 제거
-    item_metadata = (
-        data.groupby("item")
-        .agg(
-            {
-                "director": "first",  # 첫 번째 감독 정보 사용
-                "year": "first",  # 첫 번째 년도 정보 사용
-                "genre": "first",  # genre는 리스트 그대로 유지
-            }
-        )
-        .reset_index()
-    )
 
     print("-----negative sampling-----")
     user_neg_dfs = []
     for u, u_items in tqdm(user_group_dfs):
         u_items = set(u_items)
+
+        # negative sampling 개수 설정
+        threshold = 500
+        if len(u_items) >= threshold:
+            num_negative = int(len(u_items) * 0.4)
+        else:
+            num_negative = int(len(u_items) * 0.2)
+
         i_user_neg_item = np.random.choice(
             list(items - u_items), num_negative, replace=False
         )
@@ -68,73 +186,12 @@ def negative_sampling(data, num_negative):
                 "interaction": [0] * num_negative,
             }
         )
-        # 메타데이터와 결합
-        i_user_neg_df = i_user_neg_df.merge(item_metadata, on="item", how="left")
         user_neg_dfs.append(i_user_neg_df)
 
     user_neg_dfs = pd.concat(user_neg_dfs, axis=0, sort=False)
     data = pd.concat([data, user_neg_dfs], axis=0, sort=False)
 
     return data
-
-
-def zero_based_index_mapping(data):
-    """
-    0부터 시작하지 않는 id를 가진 컬럼을 0부터 시작하도록 변경
-    """
-    users = list(set(data.loc[:, "user"]))
-    users.sort()
-    items = list(set((data.loc[:, "item"])))
-    items.sort()
-
-    if len(users) - 1 != max(users):
-        users_dict = {users[i]: i for i in range(len(users))}
-        idx2users = {i: users for users, i in users_dict.items()}
-        data["user"] = data["user"].map(lambda x: users_dict[x])
-
-    if len(items) - 1 != max(items):
-        items_dict = {items[i]: i for i in range(len(items))}
-        idx2items = {i: items for items, i in items_dict.items()}
-        data["item"] = data["item"].map(lambda x: items_dict[x])
-
-    data = data.sort_values(by=["user"])
-    data.reset_index(drop=True, inplace=True)
-
-    return data, idx2users, idx2items
-
-
-def train_valid_test_split(data):
-    """
-    data를 train, valid, test로 split
-    user 별 마지막 상호작용 두 개 중 하나를 valid, 나머지 하나를 test로 설정
-    """
-    # interaction이 1인 데이터만 가져와서 valid, test로 분할
-    data_positive = data[data["interaction"] == 1.0]
-
-    train_data = []
-    valid_data = []
-    test_data = []
-
-    for user, group in data_positive.groupby("user"):
-        if len(group) > 1:  # 최소 2개의 상호작용이 있어야 valid, test로 분할 가능
-            train_data.append(group.iloc[:-2])  # 마지막 두 개를 제외한 나머지
-            valid_data.append(group.iloc[-2:-1])  # 마지막에서 두 번째를 valid
-            test_data.append(group.iloc[-1:])  # 마지막 상호작용을 test
-        else:
-            # 상호작용이 하나만 있는 경우는 모두 train으로만 사용
-            train_data.append(group)
-
-    train_df = pd.concat(train_data)
-    valid_df = (
-        pd.concat(valid_data) if valid_data else pd.DataFrame(columns=data.columns)
-    )
-    test_df = pd.concat(test_data) if test_data else pd.DataFrame(columns=data.columns)
-
-    # interaction이 0인 데이터는 train에만 포함
-    data_negative = data[data["interaction"] == 0]
-    train_df = pd.concat([train_df, data_negative])
-
-    return train_df, valid_df, test_df
 
 
 def handle_missing_value(data):
@@ -153,6 +210,7 @@ def handle_missing_value(data):
         """
         제목에서 (year) 형태의 개봉 연도를 추출하는 함수
         """
+        title = str(title)
         match = re.search(r"\((\d{4})\)", title)
         if match:
             return float(match.group(1))  # 'year'는 float64 타입이므로 변환
@@ -161,6 +219,43 @@ def handle_missing_value(data):
     data["year"] = data["year"].fillna(data["title"].apply(extract_year_from_title))
 
     return data
+
+
+def train_valid_test_split(dataset):
+    """
+    train, valid, test를 8:1:1 비율로 분할
+    """
+    train_size = int(0.8 * len(dataset))
+    valid_size = len(dataset) - train_size
+    train_dataset, valid_dataset = torch.utils.data.random_split(
+        dataset, [train_size, valid_size]
+    )
+    valid_dataset, test_dataset = torch.utils.data.random_split(
+        valid_dataset, [0.5, 0.5]
+    )
+    return train_dataset, valid_dataset, test_dataset
+
+
+def make_inference_data(data):
+    """
+    최종 예측을 위한 데이터 프레임 생성
+
+    parameters
+    ----------
+    data : batch_size 만큼의 user와 해당 user와 상호작용한 item 조합
+    """
+    user_group_dfs = list(data.groupby("user")["item"])
+    items = set(data["item"].unique())
+    df_dict = {"user": [], "item": []}
+    for u, u_items in user_group_dfs:
+        u_items = set(u_items)
+        i_user_neg_item = list(items - u_items)  # user와 상호작용하지 않은 item 리스트
+
+        df_dict["user"].extend([u] * len(i_user_neg_item))
+        df_dict["item"].extend(i_user_neg_item)
+    inference_df = pd.DataFrame(df_dict)
+
+    return inference_df
 
 
 def data_load(args):
@@ -177,60 +272,61 @@ def data_load(args):
         train_df, valid_df, test_df, idx2user, idx2item
     """
     path = args.dataset.data_path
-    rating_df = pd.read_csv(path + "train_ratings.csv")
-    directors_df = pd.read_csv(path + "directors.tsv", delimiter="\t")
-    genres_df = pd.read_csv(path + "genres.tsv", delimiter="\t")
-    titles_df = pd.read_csv(path + "titles.tsv", delimiter="\t")
-    writers_df = pd.read_csv(path + "writers.tsv", delimiter="\t")
-    years_df = pd.read_csv(path + "years.tsv", delimiter="\t")
-    result_df = rating_df.copy()
 
-    genres_df = (
-        genres_df.groupby("item").agg(genre=("genre", lambda x: list(x))).reset_index()
-    )
-    writers_df = (
-        writers_df.groupby("item")
-        .agg(writer=("writer", lambda x: list(x)))
-        .reset_index()
-    )
+    # 최종 데이터 프레임 csv가 존재할 경우 불러오고 아닐 경우 생성
+    if os.path.exists(os.path.join(path, "result_df.csv")):
+        data = pd.read_csv(os.path.join(path, "result_df.csv"))
+    else:
+        rating_df = pd.read_csv(os.path.join(path, "train_ratings.csv"))
+        result_df = rating_df.copy()
+        result_df["interaction"] = 1.0  # 상호작용 여부
+        result_df.drop(["time"], axis=1, inplace=True)  # 사용하지 않을 컬럼 drop
 
-    dfs = [directors_df, titles_df, years_df, writers_df, genres_df]
+        # negative sampling
+        items = set(result_df["item"])  # 고유 아이템 리스트
+        result_df = negative_sampling(result_df, items)
 
-    for df in dfs:
-        result_df = pd.merge(result_df, df, on="item", how="left")
+        # genre 메타 데이터 불러오기
+        genres_df = pd.read_csv(os.path.join(path, "genres.tsv"), delimiter="\t")
+        genres_df = genres_df.drop_duplicates(
+            subset=["item"]
+        )  # 장르는 item 당 하나만 남김
 
-    # 결측치 처리 후 사용하지 않을 컬럼 drop
-    data = handle_missing_value(result_df).drop(columns=["writer", "title", "time"])
+        # director 메타 데이터 불러오기
+        directors_df = pd.read_csv(os.path.join(path, "directors.tsv"), delimiter="\t")
 
-    # 'genre', 'director' 컬럼 임베딩 전 label encoding
-    data = encoding(data, "genre")
-    data = encoding(data, "director")
+        # writer 메타 데이터 불러오기
+        writers_df = pd.read_csv(os.path.join(path, "writers.tsv"), delimiter="\t")
+        writers_df = writers_df.drop_duplicates(
+            subset=["item"]
+        )  # 작가는 item 당 하나만 남김
 
-    # user, item 컬럼 zero-based index mapping
-    data, idx2user, idx2item = zero_based_index_mapping(data)
+        # title 메타 데이터 불러오기
+        titles_df = pd.read_csv(os.path.join(path, "titles.tsv"), delimiter="\t")
 
-    # interaction 컬럼 추가 (상호작용 여부 1 or 0)
-    data["interaction"] = 1.0
+        # year 메타 데이터 불러오기
+        years_df = pd.read_csv(os.path.join(path, "years.tsv"), delimiter="\t")
 
-    # negative sampling
-    # data = negative_sampling(data, args.model_args[args.model].num_negative)
+        dfs = [genres_df, directors_df, writers_df, titles_df, years_df]
 
-    total_df = data
+        for df in dfs:
+            result_df = pd.merge(result_df, df, on="item", how="left")
 
-    # train, valid, test split
-    train_df, valid_df, test_df = train_valid_test_split(data)
+        # 결측치 처리
+        data = handle_missing_value(result_df)
+
+        # 최종 생성된 데이터 프레임 csv 파일로 저장
+        data.to_csv(os.path.join(path, "result_df.csv"), mode="w", index=False)
+
+    # 모든 컬럼 매핑
+    data, field_dims, idx2user, idx2item, idx_dict = mapping(data)
 
     data = {
-        "train_df": train_df,
-        "valid_df": valid_df,
-        "test_df": test_df,
-        "total_df": total_df,
+        "result_df": data,
         "idx2user": idx2user,
         "idx2item": idx2item,
-        "num_users": total_df["user"].nunique(),
-        "num_items": total_df["item"].nunique(),
-        "num_genres": total_df.explode("genre")["genre"].nunique(),
-        "num_directors": total_df["director"].nunique(),
+        "idx_dict": idx_dict,
+        "field_dims": field_dims,
     }
 
     return data

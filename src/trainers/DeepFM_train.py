@@ -3,13 +3,10 @@ import time
 import numpy as np
 import os
 from src.loss.loss_fn import deepfm_loss
-from src.utils.metrics import Recall_at_k_batch
 import torch.optim as optimizer_module
 import torch.optim.lr_scheduler as scheduler_module
-from src.trainers.inference import multivae_predict
-from src.data.MultiVAE.MultiVAE_dataset import tensor_to_csr
 from tqdm import tqdm
-from sklearn.metrics import f1_score
+from sklearn.metrics import accuracy_score, roc_auc_score, recall_score
 
 
 update_count = 0
@@ -49,13 +46,15 @@ def train(args, model, train_dataset, valid_dataset, logger, setting):
     train_loader = torch.utils.data.DataLoader(
         train_dataset,
         batch_size=args.dataloader.batch_size,
-        shuffle=args.dataloader.shuffle,
+        shuffle=True,
     )
     valid_loader = torch.utils.data.DataLoader(
-        valid_dataset, batch_size=args.dataloader.batch_size, shuffle=False
+        valid_dataset, batch_size=args.test.batch_size, shuffle=False
     )
 
     global update_count
+
+    best_epoch, best_auc, best_acc, early_stopping = 0, 0, 0, 0
 
     for epoch in range(1, args.train.epochs + 1):
         model.train()
@@ -66,8 +65,6 @@ def train(args, model, train_dataset, valid_dataset, logger, setting):
             enumerate(train_loader), desc=f"[Epoch {epoch:02d}/{args.train.epochs:02d}]"
         ):
             X, y = data
-            X = [x.to(args.device) for x in X]
-            y = y.to(args.device)
             optimizer.zero_grad()
 
             output = model(X)
@@ -93,24 +90,22 @@ def train(args, model, train_dataset, valid_dataset, logger, setting):
                 start_time = time.time()
                 batch_train_loss = 0.0
 
-        if args.lr_scheduler.use and args.lr_scheduler.type != "ReduceLROnPlateau":
-            lr_scheduler.step()
-
         train_loss = train_loss / len(range(0, N, args.dataloader.batch_size))
 
-        valid_loss, avg_f1 = evaluate(args, model, valid_loader)
-        if args.lr_scheduler.use and args.lr_scheduler.type == "ReduceLROnPlateau":
-            lr_scheduler.step(valid_loss)
+        AUC, ACC, RECALL, valid_loss = evaluate(args, model, valid_loader)
 
         msg = ""
-        msg += "| end of epoch {:3d} | time: {:4.2f}s | valid loss {:4.2f} | f1 {:5.3f}".format(
-            epoch, time.time() - start_time, valid_loss, avg_f1
+        msg += "| end of epoch {:3d} | time: {:4.2f}s | AUC {:5.3f} | ACC {:5.3f} | RECALL {:5.3f}".format(
+            epoch, time.time() - start_time, AUC, ACC, RECALL * 0.1
         )
         print("-" * 89)
         print(msg)
         print("-" * 89)
         logger.log(
-            epoch=epoch, train_loss=train_loss, valid_loss=valid_loss, valid_f1=avg_f1
+            epoch=epoch,
+            train_loss=train_loss,
+            valid_loss=valid_loss,
+            valid_r10=RECALL * 0.1,
         )
         # wandb logging
         if args.wandb:
@@ -119,13 +114,15 @@ def train(args, model, train_dataset, valid_dataset, logger, setting):
                     "Epoch": epoch,
                     "Train Loss": train_loss,
                     "Valid Loss": valid_loss,
-                    "F1": avg_f1,
+                    "AUC": AUC,
+                    "ACC": ACC,
+                    "RECALL": RECALL * 0.1,
                 }
             )
 
         if args.train.save_best_model:
-            if avg_f1 > best_f1:
-                best_f1 = avg_f1
+            if AUC > best_auc:
+                best_epoch, best_auc, best_acc, early_stopping = epoch, AUC, ACC, 0
                 os.makedirs(args.train.ckpt_dir, exist_ok=True)
                 torch.save(
                     model.state_dict(),
@@ -137,6 +134,14 @@ def train(args, model, train_dataset, valid_dataset, logger, setting):
                 model.state_dict(),
                 f"{args.train.ckpt_dir}/{setting.save_time}_{args.model}_e{epoch:02}.pt",
             )
+            early_stopping += 1
+            if early_stopping == args.early_stopping:
+                print("##########################")
+                print(f"Early stopping triggered at epoch {epoch}")
+                print(
+                    f"BEST AUC: {best_auc}, ACC: {best_acc}, BEST EPOCH: {best_epoch}"
+                )
+                break
 
     logger.close()
 
@@ -150,13 +155,12 @@ def evaluate(args, model, dataloader):
     # DataLoader 생성
     global update_count
     total_val_loss_list = []
-    f1_scores = []  # F1 score를 저장할 리스트
+    predicts = []
+    targets = []
 
     with torch.no_grad():
         for _, data in enumerate(dataloader):
             X, y = data
-            X = [x.to(args.device) for x in X]
-            y = y.to(args.device)
 
             # 모델 예측
             output = model(X)
@@ -165,19 +169,22 @@ def evaluate(args, model, dataloader):
             loss = deepfm_loss(y, output)
             total_val_loss_list.append(loss.item())
 
-            # 예측값을 0 또는 1로 변환 (확률값을 이진 클래스 예측으로 변환)
-            predicted = torch.sigmoid(output)  # sigmoid를 통해 확률값으로 변환
-            predicted_class = (predicted >= 0.5).float()  # 0.5 이상이면 1, 아니면 0
+            predict = output.detach().cpu().tolist()
+            target = y.tolist()
 
-            # F1 score 계산 (y와 predicted_class 비교)
-            f1 = f1_score(y.cpu().numpy(), predicted_class.cpu().numpy())
-            f1_scores.append(f1)
+            predicts.extend(predict)
+            targets.extend(target)
+
+    predicts = np.array(predicts)
+    targets = np.array(targets)
 
     # 결과 평균 계산
-    avg_f1 = np.nanmean(f1_scores)
-    avg_loss = np.nanmean(total_val_loss_list)
+    auc = roc_auc_score(targets, predicts)
+    rounded_pred = np.rint(predicts)
+    acc = accuracy_score(targets, rounded_pred)
+    recall = recall_score(targets, rounded_pred)
 
-    return avg_loss, avg_f1
+    return auc, acc, recall, np.nanmean(total_val_loss_list)
 
 
 def test(args, model, dataset, setting, checkpoint=None):
@@ -197,13 +204,15 @@ def test(args, model, dataset, setting, checkpoint=None):
     # Run on test data
 
     test_loader = torch.utils.data.DataLoader(
-        dataset, batch_size=args.dataloader.batch_size, shuffle=False
+        dataset, batch_size=args.test.batch_size, shuffle=False
     )
 
-    test_loss, r10 = evaluate(args, model, test_loader)
+    AUC, ACC, RECALL, valid_loss = evaluate(args, model, test_loader)
     print("=" * 89)
     print(
-        "| End of training | test loss {:4.2f} |  r10 {:4.2f} | ".format(test_loss, r10)
+        "| End of training | AUC {:5.3f} | ACC {:5.3f} | RECALL {:5.3f} | ".format(
+            AUC, ACC, RECALL * 0.1
+        )
     )
     print("=" * 89)
 

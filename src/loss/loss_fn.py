@@ -29,14 +29,17 @@ def multivae_loss(x, output, anneal=1.0):
 def deepfm_loss(y_true, y_pred):
     """
     DeepFM 모델을 위한 손실 함수 (이진 교차 엔트로피).
-    Args:
-    - y_true: 실제값 (배치 크기 x 1)
-    - y_pred: 예측값 (배치 크기 x 1)
 
-    Returns:
-    - loss: 계산된 손실값
+    parameters
+    ----------
+    y_true: 실제값 (배치 크기 x 1)
+    y_pred: 예측값 (배치 크기 x 1)
+
+    Returns
+    -------
+    loss: 계산된 손실값
     """
-    y_true = y_true.view(-1, 1)
     # Binary Cross Entropy (BCE) loss
     loss = F.binary_cross_entropy_with_logits(y_pred, y_true)
+
     return loss
