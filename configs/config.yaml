@@ -1,0 +1,8 @@
+# 실행할 모델의 정보를 입력하는 config
+# 사용할 모델과 해당 모델명을 불러옵니다.
+
+model_names:  
+    MultiVAE:
+      name: 'MultiVAE'
+    EASE:
+      name: 'EASE'
