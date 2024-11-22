@@ -4,17 +4,27 @@ import os
 from recbole.data import create_dataset, data_preparation
 
 def get_data(config):
+    '''
+        [description]
+        RecBole 형식에 맞게 data를 생성하고, train/valid/test로 나누는 함수입니다.
+
+        [arguments]
+        config: RecBole에 필요한 config
+    '''
     dataset = create_dataset(config)
     train_data, valid_data, test_data = data_preparation(config=config, dataset=dataset)
     return train_data, valid_data, test_data
 
 def generate_data(args, config):
     '''
-    dataframe 불러와서 전처리 통해 result_df 만드는 과정은 추후 전처리 함수로 수정할 예정
-    args: 데이터가 저장된 가장 상위 경로를 불러옵니다.
-    config: RecBole에서 활용하는 데이터가 저장될 경로를 setting.yaml로부터 불러옵니다.
+        [description]
+        train data를 불러오고 전처리한 후, RecBole의 .item, .inter 데이터로 변환하는 함수입니다.
+
+        [arguments]
+        args: 기본 세팅 args
+        config: RecBole에 필요한 config
     '''
-    print(config['data_path'])
+
     if os.path.exists(config['data_path']):
         pass
     else:
