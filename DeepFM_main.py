@@ -32,13 +32,13 @@ def main(args):
     data_X = data["result_df"].drop("interaction", axis=1)
     data_y = data["result_df"]["interaction"]
 
-    X = torch.tensor(data_X.values).to(args.device)
-    y = torch.tensor(data_y.values).to(args.device)
+    X = torch.LongTensor(data_X.values).to(args.device)
+    y = torch.LongTensor(data_y.values).to(args.device)
 
     data_loader = setting.model_modular(args, "dataloader")
 
     dataset = data_loader(args, X, y)
-    train_dataset, valid_dataset, test_dataset = train_valid_test_split(dataset)
+    train_dataset, valid_dataset = train_valid_test_split(dataset)
 
     ##### model load
     print("-" * 15 + f"init {args.model}" + "-" * 15)
@@ -49,8 +49,8 @@ def main(args):
     best_model = train(args, model, train_dataset, valid_dataset, logger, setting)
 
     ##### inference
-    print("-" * 15 + f"{args.model} PREDICT" + "-" * 15)
-    model = test(args, best_model, test_dataset, setting)
+    # print("-" * 15 + f"{args.model} PREDICT" + "-" * 15)
+    # model = test(args, best_model, test_dataset, setting)
 
     ##### save predict
     print("-" * 15 + f"SAVE {args.model} PREDICT" + "-" * 15)

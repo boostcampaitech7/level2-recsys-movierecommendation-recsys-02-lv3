@@ -26,7 +26,7 @@ def multivae_loss(x, output, anneal=1.0):
     return BCE + anneal * KLD
 
 
-def deepfm_loss(y_true, y_pred):
+def deepfm_loss(y_pred, y_true):
     """
     DeepFM 모델을 위한 손실 함수 (이진 교차 엔트로피).
 
@@ -39,7 +39,9 @@ def deepfm_loss(y_true, y_pred):
     -------
     loss: 계산된 손실값
     """
+    y_pred = torch.sigmoid(y_pred)
     # Binary Cross Entropy (BCE) loss
-    loss = F.binary_cross_entropy_with_logits(y_pred, y_true)
+    bce_loss = nn.BCELoss()
+    loss = bce_loss(y_pred, y_true)
 
     return loss

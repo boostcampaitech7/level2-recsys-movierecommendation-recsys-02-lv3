@@ -68,7 +68,7 @@ def train(args, model, train_dataset, valid_dataset, logger, setting):
             optimizer.zero_grad()
 
             output = model(X)
-            loss = deepfm_loss(y, output)
+            loss = deepfm_loss(output, y.float())
 
             loss.backward()
             train_loss += loss.item()
@@ -95,8 +95,8 @@ def train(args, model, train_dataset, valid_dataset, logger, setting):
         AUC, ACC, RECALL, valid_loss = evaluate(args, model, valid_loader)
 
         msg = ""
-        msg += "| end of epoch {:3d} | time: {:4.2f}s | AUC {:5.3f} | ACC {:5.3f} | RECALL {:5.3f}".format(
-            epoch, time.time() - start_time, AUC, ACC, RECALL * 0.1
+        msg += "| end of epoch {:3d} | time: {:4.2f}s | AUC {:5.3f} | ACC {:5.3f} | RECALL {:5.3f} | train_loss {:.3f}".format(
+            epoch, time.time() - start_time, AUC, ACC, RECALL * 0.1, train_loss
         )
         print("-" * 89)
         print(msg)
@@ -145,6 +145,11 @@ def train(args, model, train_dataset, valid_dataset, logger, setting):
 
     logger.close()
 
+    checkpoint = torch.load(
+        f"{args.train.ckpt_dir}/{setting.save_time}_{args.model}_best.pt"
+    )
+    model.load_state_dict(checkpoint)
+
     return model
 
 
@@ -166,13 +171,15 @@ def evaluate(args, model, dataloader):
             output = model(X)
 
             # 손실 함수 계산
-            loss = deepfm_loss(y, output)
+            loss = deepfm_loss(output, y.float())
             total_val_loss_list.append(loss.item())
 
-            predict = output.detach().cpu().tolist()
+            predict_logits = output.detach().cpu()
             target = y.tolist()
 
-            predicts.extend(predict)
+            predict_probs = torch.sigmoid(predict_logits)
+
+            predicts.extend(predict_probs.tolist())
             targets.extend(target)
 
     predicts = np.array(predicts)

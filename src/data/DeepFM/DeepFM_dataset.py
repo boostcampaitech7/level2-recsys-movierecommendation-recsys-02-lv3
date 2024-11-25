@@ -63,7 +63,8 @@ def mapping(data):
             len(writer2idx),
             len(title2idx),
             len(year2idx),
-        ]
+        ],
+        dtype=np.uint32,
     )
 
     idx2user = {idx: user for user, idx in user2idx.items()}
@@ -113,29 +114,17 @@ def inference_mapping(data, idx_dict, args):
     writer_df = pd.read_csv(writer_data, sep="\t")
     writer_df = writer_df.drop_duplicates(subset=["item"])  # 중복 제거
     director_df = pd.read_csv(director_data, sep="\t")
+    director_df = director_df.drop_duplicates(subset=["item"])  # 중복 제거
     year_df = pd.read_csv(year_data, sep="\t")
     title_df = pd.read_csv(title_data, sep="\t")
 
-    data["item"] = data["item"].astype("int")
+    merged_data = data.copy()
 
-    merged_data = pd.merge(data, genre_df, left_on="item", right_on="item", how="left")
-    del data, genre_df  # 병합 완료된 데이터 프레임 메모리에서 삭제
-    merged_data = pd.merge(
-        merged_data, writer_df, left_on="item", right_on="item", how="left"
-    )
-    del writer_df
-    merged_data = pd.merge(
-        merged_data, year_df, left_on="item", right_on="item", how="left"
-    )
-    del year_df
-    merged_data = pd.merge(
-        merged_data, director_df, left_on="item", right_on="item", how="left"
-    )
-    del director_df
-    merged_data = pd.merge(
-        merged_data, title_df, left_on="item", right_on="item", how="left"
-    )
-    del title_df
+    dfs = [genre_df]
+
+    for df in dfs:
+        merged_data = pd.merge(merged_data, df, on="item", how="left")
+
     merged_data = handle_missing_value(merged_data)
 
     # user는 이미 임베딩되어 있는 상태
@@ -225,7 +214,7 @@ def train_valid_test_split(dataset):
     """
     train, valid, test를 8:1:1 비율로 분할
     """
-    train_size = int(0.8 * len(dataset))
+    train_size = int(0.9 * len(dataset))
     valid_size = len(dataset) - train_size
     train_dataset, valid_dataset = torch.utils.data.random_split(
         dataset, [train_size, valid_size]
@@ -233,7 +222,7 @@ def train_valid_test_split(dataset):
     valid_dataset, test_dataset = torch.utils.data.random_split(
         valid_dataset, [0.5, 0.5]
     )
-    return train_dataset, valid_dataset, test_dataset
+    return train_dataset, valid_dataset
 
 
 def make_inference_data(data):
@@ -275,7 +264,7 @@ def data_load(args):
 
     # 최종 데이터 프레임 csv가 존재할 경우 불러오고 아닐 경우 생성
     if os.path.exists(os.path.join(path, "result_df.csv")):
-        data = pd.read_csv(os.path.join(path, "result_df.csv"))
+        result_df = pd.read_csv(os.path.join(path, "result_df.csv"))
     else:
         rating_df = pd.read_csv(os.path.join(path, "train_ratings.csv"))
         result_df = rating_df.copy()
@@ -294,6 +283,9 @@ def data_load(args):
 
         # director 메타 데이터 불러오기
         directors_df = pd.read_csv(os.path.join(path, "directors.tsv"), delimiter="\t")
+        directors_df = directors_df.drop_duplicates(
+            subset=["item"]
+        )  # 감독은 item 당 하나만 남김
 
         # writer 메타 데이터 불러오기
         writers_df = pd.read_csv(os.path.join(path, "writers.tsv"), delimiter="\t")
@@ -307,7 +299,7 @@ def data_load(args):
         # year 메타 데이터 불러오기
         years_df = pd.read_csv(os.path.join(path, "years.tsv"), delimiter="\t")
 
-        dfs = [genres_df, directors_df, writers_df, titles_df, years_df]
+        dfs = [genres_df]
 
         for df in dfs:
             result_df = pd.merge(result_df, df, on="item", how="left")
@@ -316,13 +308,13 @@ def data_load(args):
         data = handle_missing_value(result_df)
 
         # 최종 생성된 데이터 프레임 csv 파일로 저장
-        data.to_csv(os.path.join(path, "result_df.csv"), mode="w", index=False)
+        result_df.to_csv(os.path.join(path, "result_df.csv"), mode="w", index=False)
 
     # 모든 컬럼 매핑
-    data, field_dims, idx2user, idx2item, idx_dict = mapping(data)
+    result_df, field_dims, idx2user, idx2item, idx_dict = mapping(result_df)
 
     data = {
-        "result_df": data,
+        "result_df": result_df,
         "idx2user": idx2user,
         "idx2item": idx2item,
         "idx_dict": idx_dict,

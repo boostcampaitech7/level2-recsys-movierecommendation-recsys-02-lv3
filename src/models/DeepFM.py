@@ -1,5 +1,6 @@
 import torch
 import torch.nn as nn
+import torch.nn.init as init
 
 
 class DeepFM(nn.Module):
@@ -7,7 +8,7 @@ class DeepFM(nn.Module):
         super(DeepFM, self).__init__()
 
         self.field_dims = field_dims
-        self.input_dims = sum(self.field_dims)
+        self.input_dims = int(sum(self.field_dims))
         self.embedding_dim = args.model_args[args.model].embed_dim
         self.mlp_dims = args.model_args[args.model].mlp_dims
         self.drop_rate = args.model_args[args.model].drop_rate
@@ -25,7 +26,7 @@ class DeepFM(nn.Module):
         for i, dim in enumerate(self.mlp_dims):
             if i == 0:
                 mlp_layers.append(
-                    nn.Linear(len(self.field_dims) * self.embedding_dim, dim)
+                    nn.Linear(self.embedding_dim * len(self.field_dims), dim)
                 )
             else:
                 mlp_layers.append(
@@ -35,6 +36,21 @@ class DeepFM(nn.Module):
             mlp_layers.append(nn.Dropout(self.drop_rate))  # 드롭아웃
         mlp_layers.append(nn.Linear(self.mlp_dims[-1], 1))  # 출력 계층
         self.mlp_layers = nn.Sequential(*mlp_layers)
+
+        # 가중치 초기화
+        self.apply(self.init_weights)
+
+    def init_weights(self, m):
+        if isinstance(m, nn.Embedding):
+            init.xavier_normal_(m.weight)  # Xavier 초기화 (Embedding에 적합)
+        elif isinstance(m, nn.Linear):
+            init.kaiming_normal_(
+                m.weight, mode="fan_in", nonlinearity="relu"
+            )  # He 초기화 (ReLU에 적합)
+            if m.bias is not None:
+                init.zeros_(m.bias)  # Bias는 0으로 초기화
+        elif isinstance(m, nn.Parameter):
+            init.zeros_(m)  # Parameter도 0으로 초기화
 
     def fm(self, x):
         """
@@ -61,7 +77,7 @@ class DeepFM(nn.Module):
         Deep Component (MLP): 모든 임베딩을 이용한 깊은 신경망 처리
         """
         embed_x = self.embedding(x)
-        inputs = embed_x.view(-1, len(self.field_dims) * self.embedding_dim)
+        inputs = embed_x.view(-1, self.embedding_dim * len(self.field_dims))
         mlp_y = self.mlp_layers(inputs)
         return mlp_y
 
@@ -72,6 +88,6 @@ class DeepFM(nn.Module):
         # deep component
         mlp_y = self.mlp(x).squeeze(1)
 
-        y = torch.sigmoid(fm_y + mlp_y)
+        y = fm_y + mlp_y
 
         return y
