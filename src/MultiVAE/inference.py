@@ -31,5 +31,4 @@ def multivae_predict(args, model, data, k = 10):
             for item_id in item_ids:
                 top_items.append((user_id, item_id.item()))
 
-
-    return top_items
+    return  predicts, top_items

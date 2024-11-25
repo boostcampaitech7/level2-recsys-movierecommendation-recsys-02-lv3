@@ -13,7 +13,7 @@ class MultiVAEDataset(Dataset):
         self.datatype = datatype
         self.device = args.device
         self.n_items = len(data['unique_sid'])
-
+    
         if self.datatype == 'train':
             self.data = self._load_train_data(self.data)
         elif self.datatype in ['validation', 'test']:
@@ -58,7 +58,6 @@ class MultiVAEDataset(Dataset):
         else:
             raise ValueError("Unsupported matrix type")
 
-        
         
     def _load_total_data(self, data):
         tp = data['total_data']

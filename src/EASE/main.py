@@ -40,10 +40,16 @@ def main(args):
 
     ##### save predict
     print("-"*15 + f"SAVE {args.model} PREDICT" + "-"*15)    
-    predicts = ease_predict(args, model, total_dataset, 10)
+    predict, top_items = ease_predict(args, model, total_dataset, 10)
     
-    result = pd.DataFrame(predicts, columns=['user', 'item'])
-    result['user'] = result['user'].apply(lambda x : data['idx2user'][x])
+    
+    # output & index 정보 저장
+    setting.save_file(args, predict)
+    setting.save_file(args, data['id2user'], '.pkl', 'user')
+    setting.save_file(args, data['id2item'], '.pkl', 'item')
+
+    result = pd.DataFrame(top_items, columns=['user', 'item'])
+    result['user'] = result['user'].apply(lambda x : data['id2user'][x])
     result['item'] = result['item'].apply(lambda x : data['id2item'][x])
     result = result.sort_values(by='user')
 
