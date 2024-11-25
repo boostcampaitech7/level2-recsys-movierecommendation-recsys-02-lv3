@@ -23,7 +23,7 @@ model_args:
         feature_dims : 64  # ALS feature 차원 (hidden dimension)
         output_dir : '../saved/submit/'  # 결과를 저장할 디렉토리
         data_path : '../data/train/'  # 데이터 파일 경로
-        epochs : 1
+        epochs : 20
         tfidf_weight : 1
 
 
