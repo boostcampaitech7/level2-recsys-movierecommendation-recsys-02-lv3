@@ -48,7 +48,7 @@ class MultiHeadAttention(nn.Module):
         Q, K, V = Q.transpose(1, 2), K.transpose(1, 2), V.transpose(1, 2)
         output, attn_dist = self.attention(Q, K, V, mask)
 
-        # 다시 Transpose한 후 모든 head들의 attention 결과를 합칩니다.
+        # 다시 Transpose한 후 모든 head들의 attention 결과를 합침
         output = output.transpose(1, 2).contiguous()
         output = output.view(batch_size, seqlen, -1)
 
@@ -61,7 +61,7 @@ class PositionwiseFeedForward(nn.Module):
     def __init__(self, hidden_units, dropout_rate):
         super(PositionwiseFeedForward, self).__init__()
 
-        # SASRec과의 dimension 차이가 있습니다.
+        # SASRec과의 dimension 차이가 존재
         self.W_1 = nn.Linear(hidden_units, 4 * hidden_units)
         self.W_2 = nn.Linear(4 * hidden_units, hidden_units)
         self.dropout = nn.Dropout(dropout_rate)
@@ -77,12 +77,12 @@ class PositionwiseFeedForward(nn.Module):
 class BERT4RecBlock(nn.Module):
     def __init__(self, num_heads, hidden_units, dropout_rate):
         super(BERT4RecBlock, self).__init__()
-        self.attention = MultiHeadAttention(num_heads, hidden_units, dropout_rate)
-        self.pointwise_feedforward = PositionwiseFeedForward(hidden_units, dropout_rate)
+        self.attention = MultiHeadAttention(num_heads, hidden_units, dropout_rate) # MultiHeadAttention와
+        self.pointwise_feedforward = PositionwiseFeedForward(hidden_units, dropout_rate) # PositionwiseFeedForward 를 연결
 
     def forward(self, input_enc, mask):
-        output_enc, attn_dist = self.attention(input_enc, mask)
-        output_enc = self.pointwise_feedforward(output_enc)
+        output_enc, attn_dist = self.attention(input_enc, mask) # 1. PositionwiseFeedForward
+        output_enc = self.pointwise_feedforward(output_enc) # 2. PositionwiseFeedForward 
         return output_enc, attn_dist
 
 
@@ -103,8 +103,8 @@ class BERT4Rec(nn.Module):
         self.emb_layernorm = nn.LayerNorm(hidden_units, eps=1e-6)
 
         self.blocks = nn.ModuleList([BERT4RecBlock(num_heads, hidden_units, dropout_rate) for _ in range(num_layers)])
-        self.out = nn.Linear(hidden_units, num_item + 1) # TODO3: 예측을 위한 output layer를 구현해보세요. (num_item 주의)
-
+        self.out = nn.Linear(hidden_units, num_item + 1)
+        
     def forward(self, log_seqs):
         # seqs = self.item_emb(torch.LongTensor(log_seqs).to(self.device))
         # positions = np.tile(np.array(range(log_seqs.shape[1])), [log_seqs.shape[0], 1])
