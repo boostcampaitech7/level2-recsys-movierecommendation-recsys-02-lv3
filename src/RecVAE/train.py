@@ -3,14 +3,17 @@ import os
 from tqdm import tqdm
 from copy import deepcopy
 
-from dataset import tensor_to_csr
 import numpy as np
 import torch
 import torch.optim as optimizer_module
 
-from utils.metrics import Recall_at_k_batch
+import sys
+current_dir = os.path.dirname(os.path.abspath(__file__)) 
+parent_dir = os.path.dirname(current_dir)
+sys.path.append(parent_dir)
+from utils.metrics import Recall_at_k_batch, NDCG_binary_at_k_batch
 
-def run(model, opts, train_data, n_epochs, batch_size, beta, gamma, dropout_rate, device='cuda'):
+def run(model, opts, train_data, n_epochs, beta, gamma, device, dropout_rate):
     model.train()
     for epoch in range(n_epochs):
         for idx, batch in enumerate(train_data):
@@ -19,7 +22,7 @@ def run(model, opts, train_data, n_epochs, batch_size, beta, gamma, dropout_rate
             for opt in opts:
                 opt.zero_grad()
 
-            _, loss = model(batch, beta=beta, gamma=gamma)
+            _, loss = model(batch, beta=beta, gamma=gamma, dropout_rate = dropout_rate)
             loss.backward()
 
             for opt in opts:
@@ -31,21 +34,16 @@ def train(args, model, train_dataset, valid_dataset, logger, setting):
     # Optimizer and Scheduler 설정
     trainable_params = filter(lambda p: p.requires_grad, model.parameters())
     
-    optimizer_encoder = getattr(optimizer_module, args.optimizer.type)(trainable_params,
-                                                               **args.optimizer.args)    
-    optimizer_decoder = getattr(optimizer_module, args.optimizer.type)(trainable_params,
-                                                               **args.optimizer.args)    
-    if args.not_alternating:
-        opts = [optimizer_encoder, optimizer_decoder]
+    optimizer = getattr(optimizer_module, args.optimizer.type)(trainable_params,
+                                                               **args.optimizer.args)      
 
     # learning parameter 설정
     learning_kwargs = {
-        'model': model,
+        'model':model,
+        'train_data':train_dataset,
         'n_epochs':3,
-        'train_data': train_dataset,
-        'batch_size': args.batch_size,
-        'beta': args.beta,
-        'gamma': args.gamma,
+        'beta': None,
+        'gamma': 1,
         'device': 'cuda'
     }
 
@@ -74,7 +72,12 @@ def train(args, model, train_dataset, valid_dataset, logger, setting):
 
 
     for epoch in range(args.train.epochs):
-        if args.implicitslim and epoch % args.step == args.step - 1:
+        start_time = time.time()
+
+        if epoch == 0:
+            best_r10 = 0
+            
+        if epoch % args.step == args.step - 1:
             encoder_embs = model.encoder.fc1.weight.data
             decoder_embs = model.decoder.weight.data.T
             for embs in [encoder_embs, decoder_embs]:
@@ -82,18 +85,21 @@ def train(args, model, train_dataset, valid_dataset, logger, setting):
                     implicit_slim(embs.detach().cpu().numpy(), train_dataset, args.lambd, args.alpha, args.threshold)
                 ).to(args.device)
         
-        if args.not_alternating:
-            run(opts=[optimizer_encoder, optimizer_decoder], args=args, n_epochs=1, dropout_rate=0.5, **learning_kwargs)
+        if args.train.not_alternating:
+            run(opts=[optimizer, optimizer], dropout_rate=0.5, **learning_kwargs)
         else:
-            run(opts=[optimizer_encoder], args=args, n_epochs=args.n_enc_epochs, dropout_rate=0.5, **learning_kwargs)
+            run(opts=[optimizer], dropout_rate=0.5, **learning_kwargs)
             model.update_prior()
-            run(opts=[optimizer_decoder], args=args, n_epochs=args.n_dec_epochs, dropout_rate=0, **learning_kwargs)
+            run(opts=[optimizer], dropout_rate=0, **learning_kwargs)
+
+        end_time = time.time()
+        elapsed_time = end_time - start_time
 
         train_scores.append(
-            evaluate(args, model, train_loader)
+            evaluate(args, model, train_loader)[0]
         )
         
-        r10 = evaluate(args, model, valid_loader)
+        r10, ndcg = evaluate(args, model, valid_loader)
         
         if r10 > best_r10:
             best_r10 = r10
@@ -101,7 +107,7 @@ def train(args, model, train_dataset, valid_dataset, logger, setting):
             torch.save(model.state_dict(), f'{args.train.ckpt_dir}/{setting.save_time}_{args.model}_best.pt')
             
 
-        print(f'epoch {epoch} | valid recall@10: {r10:.4f} | ' +
+        print(f'epoch {epoch} | elapsed time {elapsed_time} | valid recall@10: {r10:.4f} | valid ndcg: {ndcg:.4f} ' +
             f'best valid: {best_r10:.4f} | train recall@10: {train_scores[-1]:.4f}')
 
     return model
@@ -113,37 +119,34 @@ def evaluate(args, model, dataloader):
         
     # DataLoader 생성
     global update_count
-    r10_list = []
+    r10_list, ndcg_list = [], []
 
     with torch.no_grad():
-        for _, data in enumerate(dataloader):            
-            data_tr, data_te = data[0].squeeze(1).to(args.device), tensor_to_csr(data[1].squeeze(1).to(args.device))
+        for _, data in enumerate(dataloader):       
+            data_tr, data_te = data[0].to(args.device), data[1].to(args.device)
             # 배치 크기와 형태 확인
-            
-            if args.other_params.args.total_anneal_steps > 0:
-                anneal = min(args.other_params.args.anneal_cap,
-                             1. * update_count / args.other_params.args.total_anneal_steps)
-            else:
-                anneal = args.other_params.args.anneal_cap
 
             # 모델 예측
-            output = model(data_tr)
+            output = model(data_tr, calculate_loss=False)
 
-            # Exclude examples from training set
-            recon_batch = output[0].cpu().numpy()
+            recon_batch = output.cpu().numpy()
             data_tr = data_tr.cpu().numpy()
+            data_te = data_te.cpu().numpy()
 
             # Training data에서 이미 평가에 포함된 항목 제외
             recon_batch[data_tr.nonzero()] = -np.inf
 
             # 평가 지표 계산
-            r10 = Recall_at_k_batch(recon_batch, data_te, k=10)
+            r10 = Recall_at_k_batch(np.expand_dims(data_tr, axis=0), np.expand_dims(data_te, axis=0), k=10)
             r10_list.append(r10)
+
+            ndcg = NDCG_binary_at_k_batch(np.expand_dims(data_tr, axis=0), np.expand_dims(data_te, axis=0), k=10)
+            ndcg_list.append(ndcg)
 
     # 결과 평균 계산
     r10_list = np.concatenate(r10_list)
-
-    return np.nanmean(r10_list)
+    ndcg_list = np.concatenate(ndcg_list)
+    return (np.nanmean(r10_list), np.nanmean(ndcg_list))
     
 
 
@@ -163,9 +166,9 @@ def test(args, model, dataset, setting, checkpoint = None):
     
     test_loader = torch.utils.data.DataLoader(dataset, batch_size=args.dataloader.batch_size, shuffle=False)
 
-    test_loss, r10 = evaluate(args, model, test_loader)
+    r10, ndcg = evaluate(args, model, test_loader)
     print('=' * 89)
-    print('| End of training | test loss {:4.2f} |  r10 {:4.2f} | '.format(test_loss, r10))
+    print('| End of training | r10 {:4.2f} |  ndcg {:4.2f} | '.format(r10, ndcg))
     print('=' * 89)
     
     return model
