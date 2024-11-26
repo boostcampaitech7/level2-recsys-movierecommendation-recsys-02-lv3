@@ -2,13 +2,20 @@ import torch
 import time
 import numpy as np
 import os
-from src.loss.loss_fn import multivae_loss
-from src.utils.metrics import Recall_at_k_batch
+import sys
+from loss_fn import multivae_loss
+from inference import multivae_predict
+from dataset import tensor_to_csr
 import torch.optim as optimizer_module
 import torch.optim.lr_scheduler as scheduler_module
-from src.trainers.inference import multivae_predict
-from src.data.MultiVAE.MultiVAE_dataset import tensor_to_csr
 from tqdm import tqdm
+
+
+current_dir = os.path.dirname(os.path.abspath(__file__)) 
+parent_dir = os.path.dirname(current_dir)
+sys.path.append(parent_dir)
+from utils.metrics import Recall_at_k_batch
+
 
 
 update_count = 0

@@ -3,7 +3,6 @@ import random
 import numpy as np
 import torch
 import time
-from src.models import MultiVAE
 import logging
 import json
 import importlib
@@ -88,12 +87,12 @@ class Setting:
     def model_modular(self, args, filename = 'dataset', fun_name = None):
         model_name = args.model
         model_folder = os.path.join(args.dataloader.data_path, model_name)
-        module_path = os.path.join(model_folder, f"{model_name}_{filename.lower()}.py")
-        
+        module_path = os.path.join(model_folder, f"{filename.lower()}.py")
+
         if not os.path.exists(module_path):
             raise FileNotFoundError(f"Module {filename} not found in {model_folder}.")
         
-        module_name = f"src.data.{model_name}.{model_name}_{filename.lower()}"
+        module_name = f"{filename.lower()}"
         module = importlib.import_module(module_name)
         
         if fun_name:
