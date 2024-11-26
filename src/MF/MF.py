@@ -16,6 +16,7 @@ def loss(rating_mat, X, Y):
 
 
 def als(
+    args,
     rating_mat: torch.Tensor,
     answers: list,
     alpha=1,
@@ -92,5 +93,7 @@ def als(
 
             print("epoch", epoch + 1)
             print(f"loss: {loss(rating_mat, X, Y)}")
+            if not inference:
+                evaluate_recall(answers, preds)
 
     return preds

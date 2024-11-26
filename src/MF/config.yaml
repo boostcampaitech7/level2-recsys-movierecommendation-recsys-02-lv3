@@ -19,11 +19,11 @@ model_args:
         valid : 1
         inference : True  # 예측 모드 여부 (학습 모드=False, 예측 모드=True)
         alpha : 1  # Regularization 파라미터
-        l1 : 0.1  # L1 규제값
+        l1 : 0.5  # L1 규제값
         feature_dims : 64  # ALS feature 차원 (hidden dimension)
         output_dir : '../saved/submit/'  # 결과를 저장할 디렉토리
         data_path : '../data/train/'  # 데이터 파일 경로
-        epochs : 20
+        epochs : 10
         tfidf_weight : 1
 
 

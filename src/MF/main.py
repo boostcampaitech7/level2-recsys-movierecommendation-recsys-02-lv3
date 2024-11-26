@@ -39,6 +39,41 @@ def main(args):
 
     positives = ratings.groupby("user")["item"].apply(list)
 
+    if not os.path.exists(args.model_args[args.model].data_path + "MF_model/"):
+        os.mkdir(args.model_args[args.model].data_path + "MF_model/")
+    if not args.model_args[args.model].inference:
+        rating_mat_path = (
+            args.model_args[args.model].data_path
+            + f"MF_model/rating_mat_v{args.model_args[args.model].valid}_seed{args.seed}.npy"
+        )
+        if not os.path.exists(rating_mat_path):
+            rating_mat = torch.zeros(
+                (
+                    args.model_args[args.model].n_users,
+                    args.model_args[args.model].n_items,
+                ),
+                dtype=torch.float32,
+            )
+            for u, items in tqdm(
+                positives.items(), total=len(positives), desc=f"make valid rating mat"
+            ):
+                for i in items:
+                    rating_mat[u][i] = 1.0
+            np.save(rating_mat_path, rating_mat.numpy())
+        else:
+            rating_mat = np.load(rating_mat_path)
+            rating_mat = torch.from_numpy(rating_mat)
+    else:
+        rating_mat = torch.zeros(
+            (args.model_args[args.model].n_users, args.model_args[args.model].n_items),
+            dtype=torch.float32,
+        )
+        for u, items in tqdm(
+            positives.items(), total=len(positives), desc="make inference rating mat"
+        ):
+            for i in items:
+                rating_mat[u][i] = 1.0
+
     ##### model load
     print("-" * 15 + f"init {args.model}" + "-" * 15)
 
@@ -65,6 +100,7 @@ def main(args):
 
     rating_mat = rating_mat.to(args.device)
     preds = als(
+        args,
         rating_mat,
         answers if not args.model_args[args.model].inference else None,
         alpha=args.model_args[args.model].alpha,
