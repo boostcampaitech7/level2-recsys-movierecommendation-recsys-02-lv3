@@ -6,12 +6,12 @@ device: cuda
 predict_dir: saved/
 submit_dir: saved/ensemble/
 
-model_names:  
+model_names:
     MultiVAE:
       name: 'MultiVAE'
     EASE:
       name: 'EASE'
     RecBole:
       name: 'RecBole'
-
-
+    MF:
+      name: 'MF'

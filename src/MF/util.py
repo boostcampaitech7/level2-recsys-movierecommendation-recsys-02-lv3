@@ -62,7 +62,10 @@ def ratings_answer_split(ratings, valid) -> Tuple[pd.DataFrame, list]:
     return sub_ratings, sub_answers
 
 
-def generate_submission_file(data_file, preds, filename):
+def generate_submission_file(args, data_file, preds, filename):
+
+    if not os.path.exists(args.train.submit_dir):
+        os.makedirs(args.train.submit_dir)
 
     rating_df = pd.read_csv(data_file)
     users = rating_df["user"].unique()

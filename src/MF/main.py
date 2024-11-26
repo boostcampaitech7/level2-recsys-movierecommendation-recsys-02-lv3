@@ -99,7 +99,7 @@ def main(args):
                 rating_mat[u][i] = 1.0
 
     rating_mat = rating_mat.to(args.device)
-    preds = als(
+    predict, top_items = als(
         args,
         rating_mat,
         answers if not args.model_args[args.model].inference else None,
@@ -112,14 +112,19 @@ def main(args):
         tfidf_weight=args.model_args[args.model].tfidf_weight,
     )
 
+    # output & index 정보 저장
+    setting.save_file(args, predict)
+    setting.save_file(args, data["idx2user"], ".pkl", "user")
+    setting.save_file(args, data["idx2item"], ".pkl", "item")
+
     # 제출 파일 생성
     if args.model_args[args.model].inference:
-        if not os.path.exists(args.model_args[args.model].output_dir):
-            os.mkdir(args.model_args[args.model].output_dir)
+        if not os.path.exists(args.model_args[args.model].output_dir + "submit/"):
+            os.mkdir(args.model_args[args.model].output_dir + "submit/")
 
         item_preds = []
         print("Submission label encoding... ", flush=True)
-        for pred in tqdm(preds):
+        for pred in tqdm(top_items):
             item_pred = [data["idx2item"][idx] for idx in pred]  # Reverse the encoding
             item_preds.append(item_pred)
 
@@ -127,6 +132,7 @@ def main(args):
         filename = setting.get_submit_filename(args)
 
         generate_submission_file(
+            args,
             args.model_args[args.model].data_path + "train_ratings.csv",
             item_preds[:, :10],
             filename,

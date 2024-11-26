@@ -46,7 +46,7 @@ def als(
         lI = l1 * I
 
         pred_rating_mat = torch.matmul(X, Y.T)
-        pred_rating_mat[rating_mat > 0] = 0.0
+        pred_rating_mat[rating_mat > 0] = -np.inf
         _, recs = torch.sort(pred_rating_mat, dim=-1, descending=True)
         preds = recs.cpu().numpy()
 
@@ -87,7 +87,7 @@ def als(
                 Y[i] = torch.linalg.solve(left, right)
 
             pred_rating_mat = torch.matmul(X, Y.T)
-            pred_rating_mat[rating_mat > 0] = 0.0
+            pred_rating_mat[rating_mat > 0] = -np.inf
             _, recs = torch.sort(pred_rating_mat, dim=-1, descending=True)
             preds = recs.cpu().numpy()
 
@@ -96,4 +96,4 @@ def als(
             if not inference:
                 evaluate_recall(answers, preds)
 
-    return preds
+    return pred_rating_mat.cpu().numpy(), preds
