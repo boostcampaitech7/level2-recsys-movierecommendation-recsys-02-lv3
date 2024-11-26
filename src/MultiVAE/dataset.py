@@ -90,7 +90,7 @@ def _split_data(args, raw_data, tr_users, vd_users, te_users, unique_uid):
     item2idx = {item: idx for (idx, item) in enumerate(unique_sid)}
     user2idx = {user: idx for (idx, user) in enumerate(unique_uid)}
     id2item = {idx: item for (idx, item) in enumerate(unique_sid)}
-    idx2user = {idx: user for (idx, user) in enumerate(unique_uid)}
+    id2user = {idx: user for (idx, user) in enumerate(unique_uid)}
     
     
     vad_plays = raw_data.loc[raw_data['user'].isin(vd_users)]
@@ -112,7 +112,7 @@ def _split_data(args, raw_data, tr_users, vd_users, te_users, unique_uid):
         'total_data' : _numerize(raw_data, user2idx, item2idx),
         'unique_sid': unique_sid,
         'id2item' : id2item,
-        'idx2user' : idx2user
+        'id2user' : id2user
     }
     
     return data

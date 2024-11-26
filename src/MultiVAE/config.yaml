@@ -61,10 +61,11 @@ lr_scheduler:
 # dir : saved/~
 
 train:
-    epochs: 20                          # 학습 에폭 수
-    log_dir: saved/MultiVAE/log                  # 로그 저장 경로
-    ckpt_dir: saved/MultiVAE/checkpoint    # 모델 저장 경로
-    submit_dir: saved/MultiVAE/submit            # 예측 저장 경로
-    save_best_model: True               # True: val_loss가 최소인 모델 저장 / False: 모든 모델 저장
+    epochs: 20                                  # 학습 에폭 수
+    log_dir: saved/MultiVAE/log                 # 로그 저장 경로
+    ckpt_dir: saved/MultiVAE/checkpoint         # 모델 저장 경로
+    submit_dir: saved/MultiVAE/submit           # 예측 저장 경로
+    predict_dir: saved/MultiVAE/predict         # matrix 저장 경로
+    save_best_model: True                       # True: val_loss가 최소인 모델 저장 / False: 모든 모델 저장
     resume: False                               # 이어서 학습할 경우 True
-    resume_path: saved/checkpoint/MultiVAE.pt    # 이어서 학습할 모델 경로
+    resume_path: saved/checkpoint/MultiVAE.pt   # 이어서 학습할 모델 경로

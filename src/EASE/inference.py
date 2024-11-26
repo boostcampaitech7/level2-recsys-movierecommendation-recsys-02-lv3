@@ -12,4 +12,4 @@ def ease_predict(args, model, data, k):
             for item_id in item_ids:
                 top_items.append((user_id, item_id.item()))
 
-    return top_items
+    return result, top_items
