@@ -25,11 +25,11 @@ class Encoder(nn.Module):
           self.fc_logvar = nn.Linear(hidden_dim, latent_dim)
           
     def forward(self, x, dropout_rate):
-        norm = x.pow(2).sum(dim=-1).sqrt()
-        x = x / norm[:, None]
+        norm = x.pow(2).sum(dim=-1, keepdim=True).sqrt()
+        x = x / norm
     
         x = F.dropout(x, p=dropout_rate, training=self.training)
-            
+        
         def swish(x):
             return x.mul(torch.sigmoid(x))
         
@@ -73,7 +73,6 @@ class Compositeprior(nn.Module):
             return torch.logsumexp(density_per_gaussian, dim=-1)
         
 class RecVAE(nn.Module):
-
     def __init__(self, hidden_dim, latent_dim, input_dim, eps=1e-1):
         super(RecVAE, self).__init__()
 
@@ -84,7 +83,7 @@ class RecVAE(nn.Module):
         self.decoder = nn.Linear(self.latent_dim, self.input_dim)
         self.prior = Compositeprior(self.hidden_dim, self.latent_dim, self.input_dim)
 
-    def forward(self, user_ratings, beta=None, gamma=1, dropout_rate=0.5, calculate_loss=True):
+    def forward(self, user_ratings, calculate_loss, beta=None, gamma=1, dropout_rate=0.5):
         mu, logvar = self.encoder(user_ratings, dropout_rate=dropout_rate)
 
         def reparameterize(self, mu, logvar):
@@ -103,7 +102,7 @@ class RecVAE(nn.Module):
                 norm = user_ratings.sum(dim=-1)
                 kl_weight = gamma * norm
             elif beta:
-              kl_weight = beta
+                kl_weight = beta
             mll = (F.log_softmax(pred, dim=-1) * user_ratings).sum(dim=-1).mean()
             kld = (log_norm_pdf(z, mu, logvar) - self.prior(user_ratings, z)).sum(dim=-1).mul(kl_weight).mean()
             negative_elbo = -(mll - kld)
