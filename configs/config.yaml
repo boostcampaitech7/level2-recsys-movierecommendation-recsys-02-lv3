@@ -6,3 +6,5 @@ model_names:
       name: 'MultiVAE'
     EASE:
       name: 'EASE'
+    RecVAE:
+      name: 'RecVAE'

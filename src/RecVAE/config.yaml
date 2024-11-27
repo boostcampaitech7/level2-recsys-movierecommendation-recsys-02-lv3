@@ -33,7 +33,7 @@ optimizer:
         amsgrad: False                           # 예) Adam 등 / amsgrad 사용 여부
 
 train:
-    epochs: 100
+    epochs: 3
     not_alternating: False
     log_dir: saved/RecVAE/log                  # 로그 저장 경로
     ckpt_dir: saved/RecVAE/checkpoint    # 모델 저장 경로
