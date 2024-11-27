@@ -9,7 +9,7 @@ import json
 from tqdm import tqdm
 import importlib
 from collections import defaultdict
-
+import torch.nn.functional as F
 
 class Setting:
     @staticmethod
