@@ -38,7 +38,6 @@ class RecVAEDataset(Dataset):
             return self.data.shape[0]
         
     def __getitem__(self, idx):
-        print(f"get item {idx}")
         if self.datatype in ['validation', 'test']:
             return self._sparse_to_tensor(self.data_tr[idx]), self._sparse_to_tensor(self.data_te[idx])
         else:
