@@ -15,3 +15,7 @@ model_names:
       name: 'RecBole'
     MF:
       name: 'MF'
+    BERT4Rec:
+      name: 'BERT4Rec'
+    EASER:
+      name: 'EASER'
