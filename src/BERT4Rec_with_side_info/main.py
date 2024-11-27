@@ -4,6 +4,7 @@ from omegaconf import OmegaConf
 import pandas as pd
 import os
 import sys
+import glob
 
 import torch
 import torch.optim as optimizer_module
@@ -60,9 +61,11 @@ def main(args):
                                               args.model_args.BERT4Rec_with_side_info.max_len, args.model_args.BERT4Rec_with_side_info.dropout_rate, args.device)
 
     model = model.to(args.device)
-    if args.train.ckpt_dir:
+
+    if os.path.exists(args.train.ckpt_dir):
         print("Load model from pretrained folder")
-        model_state_dict = torch.load(os.path.join(args.train.ckpt_dir, 'best_model_state_dict.pt'), map_location=args.device)
+        model_path = os.path.join(args.train.ckpt_dir, 'best.pth')
+        model_state_dict = torch.load(model_path, map_location=args.device)
         model.load_state_dict(model_state_dict)
     else:
         ##### running model(train & evaluate & save model)
@@ -88,7 +91,12 @@ def main(args):
     final_predict, logit_list = inference(model, data['num_user'], data['num_item'], data['total_df'], data['user2idx'], data['item2idx'], args.model_args.BERT4Rec_with_side_info.max_len, data['item_genre_dic'])
     
     # save the submit & ensemble file
-    get_total_probability(args, logit_list)
+    sorted_probabilities = get_total_probability(logit_list)
+
+    setting.save_file(args, sorted_probabilities, file_extension=".npy", type = None)
+    setting.save_file(args, sorted_probabilities, '.pkl', 'user')
+    setting.save_file(args, sorted_probabilities, '.pkl', 'item')
+
     filename = setting.get_submit_filename(args)
     final_predict.to_csv(filename, index=False)
 
