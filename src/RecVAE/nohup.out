@@ -1,0 +1,413 @@
+seed: 1111
+predict: false
+device: cuda
+model: RecVAE
+wandb: false
+model_args:
+  RecVAE:
+    hidden_dim: 600
+    latent_dim: 200
+    input_dim: 6807
+dataset:
+  data_path: /data/ephemeral/home/data/train/
+  ratio: 0.1
+  test_prop: 0.2
+dataloader:
+  data_path: /data/ephemeral/home/src/
+  batch_size: 500
+  shuffle: true
+  num_workers: 0
+optimizer:
+  type: Adam
+  args:
+    lr: 0.0001
+    weight_decay: 0
+    amsgrad: false
+train:
+  epochs: 50
+  not_alternating: false
+  log_dir: saved/RecVAE/log
+  ckpt_dir: saved/RecVAE/checkpoint
+  submit_dir: saved/RecVAE/submit
+  save_best_model: true
+  resume: false
+config: /data/ephemeral/home/src/RecVAE/config.yaml
+step: 10
+gamma: 0.004
+lambd: 500
+alpha: 1
+threshold: 1000
+
+---------------RecVAE Load Data---------------
+---------------init RecVAE---------------
+---------------RecVAE TRAINING---------------
+{'metric': 'recall', 'k': 20, 'score': []}
+Traceback (most recent call last):
+  File "/data/ephemeral/home/src/RecVAE/main.py", line 169, in <module>
+    main(config_yaml)
+  File "/data/ephemeral/home/src/RecVAE/main.py", line 53, in main
+    model = train(args, model, train_dataset, valid_dataset, logger, setting)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/ephemeral/home/src/RecVAE/train.py", line 72, in train
+    evaluate(args, model, train_loader)[0]
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/ephemeral/home/src/RecVAE/train.py", line 108, in evaluate
+    m['score'].append(Recall_at_k_batch(items_pred, data_te, k=m['k']))
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/ephemeral/home/src/utils/metrics.py", line 58, in Recall_at_k_batch
+    X_pred_binary[np.arange(batch_users)[:, np.newaxis], idx[:, :k]] = True
+                                                         ~~~^^^^^^^
+IndexError: too many indices for array: array is 1-dimensional, but 2 were indexed
+seed: 1111
+predict: false
+device: cuda
+model: RecVAE
+wandb: false
+model_args:
+  RecVAE:
+    hidden_dim: 600
+    latent_dim: 200
+    input_dim: 6807
+dataset:
+  data_path: /data/ephemeral/home/data/train/
+  ratio: 0.1
+  test_prop: 0.2
+dataloader:
+  data_path: /data/ephemeral/home/src/
+  batch_size: 500
+  shuffle: true
+  num_workers: 0
+optimizer:
+  type: Adam
+  args:
+    lr: 0.0001
+    weight_decay: 0
+    amsgrad: false
+train:
+  epochs: 50
+  not_alternating: false
+  log_dir: saved/RecVAE/log
+  ckpt_dir: saved/RecVAE/checkpoint
+  submit_dir: saved/RecVAE/submit
+  save_best_model: true
+  resume: false
+config: /data/ephemeral/home/src/RecVAE/config.yaml
+step: 10
+gamma: 0.004
+lambd: 500
+alpha: 1
+threshold: 1000
+
+---------------RecVAE Load Data---------------
+---------------init RecVAE---------------
+---------------RecVAE TRAINING---------------
+{'metric': 'recall', 'k': 20, 'score': []}
+6807 (6807,)
+Traceback (most recent call last):
+  File "/data/ephemeral/home/src/RecVAE/main.py", line 169, in <module>
+    main(config_yaml)
+  File "/data/ephemeral/home/src/RecVAE/main.py", line 53, in main
+    model = train(args, model, train_dataset, valid_dataset, logger, setting)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/ephemeral/home/src/RecVAE/train.py", line 72, in train
+    evaluate(args, model, train_loader)[0]
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/ephemeral/home/src/RecVAE/train.py", line 108, in evaluate
+    m['score'].append(Recall_at_k_batch(items_pred, data_te, k=m['k']))
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/ephemeral/home/src/utils/metrics.py", line 59, in Recall_at_k_batch
+    X_pred_binary[np.arange(batch_users)[:, np.newaxis], idx[:k]] = True
+    ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+IndexError: too many indices for array: array is 1-dimensional, but 2 were indexed
+seed: 1111
+predict: false
+device: cuda
+model: RecVAE
+wandb: false
+model_args:
+  RecVAE:
+    hidden_dim: 600
+    latent_dim: 200
+    input_dim: 6807
+dataset:
+  data_path: /data/ephemeral/home/data/train/
+  ratio: 0.1
+  test_prop: 0.2
+dataloader:
+  data_path: /data/ephemeral/home/src/
+  batch_size: 500
+  shuffle: true
+  num_workers: 0
+optimizer:
+  type: Adam
+  args:
+    lr: 0.0001
+    weight_decay: 0
+    amsgrad: false
+train:
+  epochs: 50
+  not_alternating: false
+  log_dir: saved/RecVAE/log
+  ckpt_dir: saved/RecVAE/checkpoint
+  submit_dir: saved/RecVAE/submit
+  save_best_model: true
+  resume: false
+config: /data/ephemeral/home/src/RecVAE/config.yaml
+step: 10
+gamma: 0.004
+lambd: 500
+alpha: 1
+threshold: 1000
+
+---------------RecVAE Load Data---------------
+---------------init RecVAE---------------
+---------------RecVAE TRAINING---------------
+(6807,) torch.Size([6807])
+Traceback (most recent call last):
+  File "/data/ephemeral/home/src/RecVAE/main.py", line 169, in <module>
+    main(config_yaml)
+  File "/data/ephemeral/home/src/RecVAE/main.py", line 53, in main
+    model = train(args, model, train_dataset, valid_dataset, logger, setting)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/ephemeral/home/src/RecVAE/train.py", line 72, in train
+    evaluate(args, model, train_loader)[0]
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/ephemeral/home/src/RecVAE/train.py", line 107, in evaluate
+    m['score'].append(Recall_at_k_batch(items_pred, data_te, k=m['k']))
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/ephemeral/home/src/utils/metrics.py", line 28, in Recall_at_k_batch
+    X_pred = X_pred.unsqueeze(0)
+             ^^^^^^^^^^^^^^^^
+AttributeError: 'numpy.ndarray' object has no attribute 'unsqueeze'. Did you mean: 'squeeze'?
+seed: 1111
+predict: false
+device: cuda
+model: RecVAE
+wandb: false
+model_args:
+  RecVAE:
+    hidden_dim: 600
+    latent_dim: 200
+    input_dim: 6807
+dataset:
+  data_path: /data/ephemeral/home/data/train/
+  ratio: 0.1
+  test_prop: 0.2
+dataloader:
+  data_path: /data/ephemeral/home/src/
+  batch_size: 500
+  shuffle: true
+  num_workers: 0
+optimizer:
+  type: Adam
+  args:
+    lr: 0.0001
+    weight_decay: 0
+    amsgrad: false
+train:
+  epochs: 50
+  not_alternating: false
+  log_dir: saved/RecVAE/log
+  ckpt_dir: saved/RecVAE/checkpoint
+  submit_dir: saved/RecVAE/submit
+  save_best_model: true
+  resume: false
+config: /data/ephemeral/home/src/RecVAE/config.yaml
+step: 10
+gamma: 0.004
+lambd: 500
+alpha: 1
+threshold: 1000
+
+---------------RecVAE Load Data---------------
+---------------init RecVAE---------------
+---------------RecVAE TRAINING---------------
+Traceback (most recent call last):
+  File "/data/ephemeral/home/src/RecVAE/main.py", line 169, in <module>
+    main(config_yaml)
+  File "/data/ephemeral/home/src/RecVAE/main.py", line 53, in main
+    model = train(args, model, train_dataset, valid_dataset, logger, setting)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/ephemeral/home/src/RecVAE/train.py", line 72, in train
+    evaluate(args, model, train_loader)[0]
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/ephemeral/home/src/RecVAE/train.py", line 107, in evaluate
+    m['score'].append(Recall_at_k_batch(items_pred.reshape(1,-1).cpu().detach().numpy(), data_te.reshape(1,-1), k=m['k']))
+                                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'numpy.ndarray' object has no attribute 'cpu'
+seed: 1111
+predict: false
+device: cuda
+model: RecVAE
+wandb: false
+model_args:
+  RecVAE:
+    hidden_dim: 600
+    latent_dim: 200
+    input_dim: 6807
+dataset:
+  data_path: /data/ephemeral/home/data/train/
+  ratio: 0.1
+  test_prop: 0.2
+dataloader:
+  data_path: /data/ephemeral/home/src/
+  batch_size: 500
+  shuffle: true
+  num_workers: 0
+optimizer:
+  type: Adam
+  args:
+    lr: 0.0001
+    weight_decay: 0
+    amsgrad: false
+train:
+  epochs: 50
+  not_alternating: false
+  log_dir: saved/RecVAE/log
+  ckpt_dir: saved/RecVAE/checkpoint
+  submit_dir: saved/RecVAE/submit
+  save_best_model: true
+  resume: false
+config: /data/ephemeral/home/src/RecVAE/config.yaml
+step: 10
+gamma: 0.004
+lambd: 500
+alpha: 1
+threshold: 1000
+
+---------------RecVAE Load Data---------------
+---------------init RecVAE---------------
+---------------RecVAE TRAINING---------------
+Traceback (most recent call last):
+  File "/data/ephemeral/home/src/RecVAE/main.py", line 169, in <module>
+    main(config_yaml)
+  File "/data/ephemeral/home/src/RecVAE/main.py", line 53, in main
+    model = train(args, model, train_dataset, valid_dataset, logger, setting)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/ephemeral/home/src/RecVAE/train.py", line 79, in train
+    if valid_scores[-1] > best_ndcg:
+                          ^^^^^^^^^
+UnboundLocalError: cannot access local variable 'best_ndcg' where it is not associated with a value
+seed: 1111
+predict: false
+device: cuda
+model: RecVAE
+wandb: false
+model_args:
+  RecVAE:
+    hidden_dim: 600
+    latent_dim: 200
+    input_dim: 6807
+dataset:
+  data_path: /data/ephemeral/home/data/train/
+  ratio: 0.1
+  test_prop: 0.2
+dataloader:
+  data_path: /data/ephemeral/home/src/
+  batch_size: 500
+  shuffle: true
+  num_workers: 0
+optimizer:
+  type: Adam
+  args:
+    lr: 0.0001
+    weight_decay: 0
+    amsgrad: false
+train:
+  epochs: 50
+  not_alternating: false
+  log_dir: saved/RecVAE/log
+  ckpt_dir: saved/RecVAE/checkpoint
+  submit_dir: saved/RecVAE/submit
+  save_best_model: true
+  resume: false
+config: /data/ephemeral/home/src/RecVAE/config.yaml
+step: 10
+gamma: 0.004
+lambd: 500
+alpha: 1
+threshold: 1000
+
+---------------RecVAE Load Data---------------
+---------------init RecVAE---------------
+---------------RecVAE TRAINING---------------
+epoch 1 | elapsed time 2.108403444290161 | valid recall@20: 0.4643 | train recall@20: 0.4275
+epoch 2 | elapsed time 2.2460062503814697 | valid recall@20: 0.4214 | train recall@20: 0.4892
+epoch 3 | elapsed time 2.190422534942627 | valid recall@20: 0.5143 | train recall@20: 0.3755
+epoch 4 | elapsed time 2.1821773052215576 | valid recall@20: 0.5214 | train recall@20: 0.4333
+epoch 5 | elapsed time 2.312417984008789 | valid recall@20: 0.5714 | train recall@20: 0.3588
+epoch 6 | elapsed time 2.140836715698242 | valid recall@20: 0.5786 | train recall@20: 0.4186
+epoch 7 | elapsed time 2.2192065715789795 | valid recall@20: 0.5714 | train recall@20: 0.4324
+epoch 8 | elapsed time 2.2184696197509766 | valid recall@20: 0.5429 | train recall@20: 0.4451
+epoch 9 | elapsed time 2.138688087463379 | valid recall@20: 0.5571 | train recall@20: 0.4843
+epoch 10 | elapsed time 2.1603922843933105 | valid recall@20: 0.4786 | train recall@20: 0.4647
+epoch 11 | elapsed time 2.216155767440796 | valid recall@20: 0.4571 | train recall@20: 0.4157
+epoch 12 | elapsed time 2.1952385902404785 | valid recall@20: 0.3143 | train recall@20: 0.3902
+epoch 13 | elapsed time 2.1386029720306396 | valid recall@20: 0.1286 | train recall@20: 0.4676
+epoch 14 | elapsed time 2.2078394889831543 | valid recall@20: 0.1429 | train recall@20: 0.4010
+epoch 15 | elapsed time 2.174642562866211 | valid recall@20: 0.1500 | train recall@20: 0.4824
+epoch 16 | elapsed time 2.104257583618164 | valid recall@20: 0.1571 | train recall@20: 0.3765
+epoch 17 | elapsed time 2.511571168899536 | valid recall@20: 0.1643 | train recall@20: 0.4627
+epoch 18 | elapsed time 2.3735709190368652 | valid recall@20: 0.1214 | train recall@20: 0.4147
+epoch 19 | elapsed time 2.2430002689361572 | valid recall@20: 0.1286 | train recall@20: 0.4941
+epoch 20 | elapsed time 2.2111010551452637 | valid recall@20: 0.1143 | train recall@20: 0.4461
+epoch 21 | elapsed time 2.252021312713623 | valid recall@20: 0.1143 | train recall@20: 0.4549
+epoch 22 | elapsed time 2.114868402481079 | valid recall@20: 0.1000 | train recall@20: 0.4265
+epoch 23 | elapsed time 2.1418545246124268 | valid recall@20: 0.1286 | train recall@20: 0.4676
+epoch 24 | elapsed time 2.3665926456451416 | valid recall@20: 0.1286 | train recall@20: 0.4363
+epoch 25 | elapsed time 2.19134783744812 | valid recall@20: 0.1214 | train recall@20: 0.4598
+epoch 26 | elapsed time 2.1723127365112305 | valid recall@20: 0.1357 | train recall@20: 0.4392
+epoch 27 | elapsed time 2.326347589492798 | valid recall@20: 0.1429 | train recall@20: 0.4000
+epoch 28 | elapsed time 2.135503053665161 | valid recall@20: 0.1571 | train recall@20: 0.4990
+epoch 29 | elapsed time 2.213982343673706 | valid recall@20: 0.1643 | train recall@20: 0.3402
+epoch 30 | elapsed time 2.230393409729004 | valid recall@20: 0.1500 | train recall@20: 0.4029
+epoch 31 | elapsed time 2.118007183074951 | valid recall@20: 0.1857 | train recall@20: 0.4696
+epoch 32 | elapsed time 2.1685590744018555 | valid recall@20: 0.6286 | train recall@20: 0.4206
+epoch 33 | elapsed time 2.1179306507110596 | valid recall@20: 0.1571 | train recall@20: 0.3745
+epoch 34 | elapsed time 2.247126579284668 | valid recall@20: 0.1643 | train recall@20: 0.4745
+epoch 35 | elapsed time 2.1759233474731445 | valid recall@20: 0.2071 | train recall@20: 0.4020
+epoch 36 | elapsed time 2.116295576095581 | valid recall@20: 0.2000 | train recall@20: 0.5441
+epoch 37 | elapsed time 2.3768270015716553 | valid recall@20: 0.3357 | train recall@20: 0.3931
+epoch 38 | elapsed time 2.2348246574401855 | valid recall@20: 0.2500 | train recall@20: 0.4686
+epoch 39 | elapsed time 2.151571035385132 | valid recall@20: 0.2429 | train recall@20: 0.3990
+epoch 40 | elapsed time 2.165262460708618 | valid recall@20: 0.3143 | train recall@20: 0.4078
+epoch 41 | elapsed time 2.1170718669891357 | valid recall@20: 0.2786 | train recall@20: 0.4647
+epoch 42 | elapsed time 2.299978494644165 | valid recall@20: 0.2571 | train recall@20: 0.4725
+epoch 43 | elapsed time 2.2358205318450928 | valid recall@20: 0.2214 | train recall@20: 0.3980
+epoch 44 | elapsed time 2.203195095062256 | valid recall@20: 0.2429 | train recall@20: 0.4304
+epoch 45 | elapsed time 2.183642864227295 | valid recall@20: 0.2643 | train recall@20: 0.4578
+epoch 46 | elapsed time 2.31101655960083 | valid recall@20: 0.2429 | train recall@20: 0.4098
+epoch 47 | elapsed time 2.1326606273651123 | valid recall@20: 0.2357 | train recall@20: 0.4480
+epoch 48 | elapsed time 2.1494483947753906 | valid recall@20: 0.2143 | train recall@20: 0.3971
+epoch 49 | elapsed time 2.1071865558624268 | valid recall@20: 0.2143 | train recall@20: 0.4098
+epoch 50 | elapsed time 2.288677453994751 | valid recall@20: 0.2143 | train recall@20: 0.3824
+---------------RecVAE PREDICT---------------
+Traceback (most recent call last):
+  File "/data/ephemeral/home/src/RecVAE/main.py", line 169, in <module>
+    
+    ^
+  File "/data/ephemeral/home/src/RecVAE/main.py", line 57, in main
+    
+  File "/data/ephemeral/home/.pyenv/versions/3.11.10/envs/myenv/lib/python3.11/site-packages/omegaconf/dictconfig.py", line 355, in __getattr__
+    self._format_and_raise(
+  File "/data/ephemeral/home/.pyenv/versions/3.11.10/envs/myenv/lib/python3.11/site-packages/omegaconf/base.py", line 231, in _format_and_raise
+    format_and_raise(
+  File "/data/ephemeral/home/.pyenv/versions/3.11.10/envs/myenv/lib/python3.11/site-packages/omegaconf/_utils.py", line 899, in format_and_raise
+    _raise(ex, cause)
+  File "/data/ephemeral/home/.pyenv/versions/3.11.10/envs/myenv/lib/python3.11/site-packages/omegaconf/_utils.py", line 797, in _raise
+    raise ex.with_traceback(sys.exc_info()[2])  # set env var OC_CAUSE=1 for full trace
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/ephemeral/home/.pyenv/versions/3.11.10/envs/myenv/lib/python3.11/site-packages/omegaconf/dictconfig.py", line 351, in __getattr__
+    return self._get_impl(
+           ^^^^^^^^^^^^^^^
+  File "/data/ephemeral/home/.pyenv/versions/3.11.10/envs/myenv/lib/python3.11/site-packages/omegaconf/dictconfig.py", line 442, in _get_impl
+    node = self._get_child(
+           ^^^^^^^^^^^^^^^^
+  File "/data/ephemeral/home/.pyenv/versions/3.11.10/envs/myenv/lib/python3.11/site-packages/omegaconf/basecontainer.py", line 73, in _get_child
+    child = self._get_node(
+            ^^^^^^^^^^^^^^^
+  File "/data/ephemeral/home/.pyenv/versions/3.11.10/envs/myenv/lib/python3.11/site-packages/omegaconf/dictconfig.py", line 480, in _get_node
+    raise ConfigKeyError(f"Missing key {key!s}")
+omegaconf.errors.ConfigAttributeError: Missing key checkpoint
+    full_key: checkpoint
+    object_type=dict

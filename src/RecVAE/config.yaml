@@ -1,4 +1,4 @@
-checkpoint: 'saved/checkpoint/RecVAE.pt'
+checkpoint: 'saved/RecVAE/checkpoint/20241127_102713_RecVAE_best.pt'
 seed: 1111
 predict: False
 device: cuda

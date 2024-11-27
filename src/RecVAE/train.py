@@ -150,10 +150,10 @@ def evaluate(args, model, dataloader):
     
 
 
-def test(args, model, dataset, setting, checkpoint = None):
+def test(args, model, dataset, setting, checkpoint = True):
     
     if checkpoint:
-        model.load_state_dict(torch.load(checkpoint, weights_only=True))
+        model.load_state_dict(torch.load(args.checkpoint, weights_only=True))
     else:
         if args.train.save_best_model:
             model_path = f'{args.train.ckpt_dir}/{setting.save_time}_{args.model}_best.pt'

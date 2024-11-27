@@ -6,7 +6,7 @@ from omegaconf import OmegaConf
 import pandas as pd
 import torch.optim as optimizer_module
 import torch.optim.lr_scheduler as scheduler_module
-import MultiVAE as model_module
+import RecVAE as model_module
 from inference import recvae_predict
 from train import train, test
 
@@ -34,7 +34,6 @@ def main(args):
     print("-"*15 + f"{args.model} Load Data" + "-"*15)
 
     data = setting.model_modular(args, 'dataset', 'data_load')(args)
-    
     data_loader = setting.model_modular(args, 'dataloader')
     
     train_dataset = data_loader(args, data, datatype='train')
@@ -44,11 +43,12 @@ def main(args):
     
     ##### model load
     print("-"*15 + f"init {args.model}" + "-"*15)
-    model = getattr(model_module, args.model)(args.model_args[args.model]['p_dims'] + [len(data['unique_sid'])]).to(args.device)
+    model = getattr(model_module, args.model)(args.model_args[args.model]['hidden_dim'], args.model_args[args.model]['latent_dim'], args.model_args[args.model]['input_dim']).to(args.device)
 
-    ##### running model(train & evaluate & save model)
-    print("-"*15 + f"{args.model} TRAINING" + "-"*15)
-    model = train(args, model, train_dataset, valid_dataset, logger, setting)
+    if args.predict == False:
+        ##### running model(train & evaluate & save model)
+        print("-"*15 + f"{args.model} TRAINING" + "-"*15)
+        model = train(args, model, train_dataset, valid_dataset, logger, setting)
 
     ##### inference
     print("-"*15 + f"{args.model} PREDICT" + "-"*15)
@@ -93,7 +93,7 @@ if __name__ == "__main__":
     arg('--predict', '-p', '--p', '--pred', type=ast.literal_eval, 
         help='학습을 생략할지 여부를 설정할 수 있습니다.')
     arg('--model', '-m', '--m', type=str, 
-        default='MultiVAE',
+        default='RecVAE',
         help='학습 및 예측할 모델을 선택할 수 있습니다.')
     arg('--seed', '-s', '--s', type=int,
         help='데이터분할 및 모델 초기화 시 사용할 시드를 설정할 수 있습니다.')

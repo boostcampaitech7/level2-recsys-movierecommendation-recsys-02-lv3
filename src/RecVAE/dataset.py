@@ -11,6 +11,24 @@ def _get_count(tp, id):
     playcount_groupbyid = tp[[id]].groupby(id, as_index=False)
     return playcount_groupbyid.size()
 
+def split_train_test_proportion(data, test_prop=0.2):
+    data_grouped_by_user = data.groupby('user')
+    tr_list, te_list = list(), list()
+
+
+    for i, (_, group) in enumerate(data_grouped_by_user):
+        n_items_u = len(group)
+
+        idx = np.zeros(n_items_u, dtype='bool')
+        idx[np.random.choice(n_items_u, size=int(test_prop * n_items_u), replace=False).astype('int64')] = True
+
+        tr_list.append(group[np.logical_not(idx)])
+        te_list.append(group[idx])
+
+    data_tr = pd.concat(tr_list)
+    data_te = pd.concat(te_list)
+
+    return data_tr, data_te
 
 def _numerize(tp, user2idx, item2idx):
     uid = tp['user'].apply(lambda x: user2idx[x])
@@ -68,15 +86,19 @@ def _split_data(raw_data, tr_users, vd_users, te_users, unique_uid):
     
     vad_plays = raw_data.loc[raw_data['user'].isin(vd_users)]
     vad_plays = vad_plays.loc[vad_plays['item'].isin(unique_sid)]
+    vad_plays_tr, vad_plays_te = split_train_test_proportion(vad_plays)
 
     test_plays = raw_data.loc[raw_data['user'].isin(te_users)]
     test_plays = test_plays.loc[test_plays['item'].isin(unique_sid)]
+    test_plays_tr, test_plays_te = split_train_test_proportion(test_plays)
 
     # output
     data = {
         'train_data': _numerize(train_plays.copy(), user2idx, item2idx),
-        'validation_data': _numerize(vad_plays.copy(), user2idx, item2idx),
-        'test_data': _numerize(test_plays.copy(), user2idx, item2idx),
+        'validation_tr': _numerize(vad_plays_tr.copy(), user2idx, item2idx),
+        'validation_te': _numerize(vad_plays_te.copy(), user2idx, item2idx),
+        'test_tr': _numerize(test_plays_tr.copy(), user2idx, item2idx),
+        'test_te': _numerize(test_plays_te.copy(), user2idx, item2idx),
         'total_data' : _numerize(raw_data.copy(), user2idx, item2idx),
         'unique_sid': unique_sid,
         'id2item' : id2item,
@@ -102,7 +124,7 @@ def data_load(args):
     data : dict
         학습 데이터와 user, item 정보가 담긴 사전 형식의 데이터를 반환합니다.
     """
-    
+    print("load data")
     train_df = pd.read_csv(args.dataset.data_path + 'train_ratings.csv', header=0)
 
     user_activity = _get_count(train_df, 'user')
@@ -120,5 +142,4 @@ def data_load(args):
     te_users = unique_uid[(n_users - n_heldout_users):]
     
     data = _split_data(train_df, tr_users, vd_users, te_users, unique_uid)
-    
     return data
