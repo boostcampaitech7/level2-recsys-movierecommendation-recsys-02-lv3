@@ -88,12 +88,12 @@ def train(args, model, train_dataloader, valid_dataloader, logger):
             ##### 이 부분 best model 선택할 때 acc로 하는 건 어떰
             if best_val_acc < valid_acc:
                 print(f"New best model for val acc : {valid_acc * 100:.5f}! saving the best model..")
-                torch.save(model, f"{output_dir}/best.pt")
+                torch.save(model.state_dict(), f"{output_dir}/best.pt")
                 best_val_loss = valid_loss_avg
                 best_val_acc = valid_acc
                 stop_counter = 0
                 
-            torch.save(model, f"{output_dir}/last.pt")
+            torch.save(model.state_dict(), f"{output_dir}/last.pt")
                 
             print(
                 f"Validation Accuracy : {valid_acc:4.2%}, Validation Loss: {valid_loss_avg:.5f} || "
