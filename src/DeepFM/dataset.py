@@ -47,10 +47,6 @@ def mapping(data):
     data["writer"] = data["writer"].map(writer2idx)
 
     offset += len(writer2idx)
-    title2idx = {title: idx for idx, title in enumerate(data["title"].unique(), offset)}
-    data["title"] = data["title"].map(title2idx)
-
-    offset += len(title2idx)
     year2idx = {year: idx for idx, year in enumerate(data["year"].unique(), offset)}
     data["year"] = data["year"].map(year2idx)
 
@@ -61,7 +57,6 @@ def mapping(data):
             len(genre2idx),
             len(director2idx),
             len(writer2idx),
-            len(title2idx),
             len(year2idx),
         ],
         dtype=np.uint32,
@@ -80,7 +75,6 @@ def mapping(data):
         "writer2idx": writer2idx,
         "director2idx": director2idx,
         "year2idx": year2idx,
-        "title2idx": title2idx,
     }
 
     return data, field_dims, idx2user, idx2item, idx_dict
@@ -120,12 +114,14 @@ def inference_mapping(data, idx_dict, args):
 
     merged_data = data.copy()
 
-    dfs = [genre_df]
+    dfs = [genre_df, writer_df, director_df, year_df, title_df]
 
     for df in dfs:
-        merged_data = pd.merge(merged_data, df, on="item", how="left")
+        merged_data = pd.merge(merged_data, df, on="item", how="left").fillna(0)
 
     merged_data = handle_missing_value(merged_data)
+
+    merged_data = merged_data.drop(columns=["title"])
 
     # user는 이미 임베딩되어 있는 상태
     merged_data["item"] = merged_data["item"].map(idx_dict["item2idx"])
@@ -137,9 +133,6 @@ def inference_mapping(data, idx_dict, args):
         merged_data["director"].astype("string").map(idx_dict["director2idx"])
     )
     merged_data["year"] = merged_data["year"].map(idx_dict["year2idx"])
-    merged_data["title"] = (
-        merged_data["title"].astype("string").map(idx_dict["title2idx"])
-    )
 
     return torch.tensor(merged_data.values).long().to(args.device)
 
@@ -212,15 +205,12 @@ def handle_missing_value(data):
 
 def train_valid_test_split(dataset):
     """
-    train, valid, test를 8:1:1 비율로 분할
+    train, valid를 9:1 비율로 분할
     """
     train_size = int(0.9 * len(dataset))
     valid_size = len(dataset) - train_size
     train_dataset, valid_dataset = torch.utils.data.random_split(
         dataset, [train_size, valid_size]
-    )
-    valid_dataset, test_dataset = torch.utils.data.random_split(
-        valid_dataset, [0.5, 0.5]
     )
     return train_dataset, valid_dataset
 
@@ -293,19 +283,19 @@ def data_load(args):
             subset=["item"]
         )  # 작가는 item 당 하나만 남김
 
-        # title 메타 데이터 불러오기
-        titles_df = pd.read_csv(os.path.join(path, "titles.tsv"), delimiter="\t")
-
         # year 메타 데이터 불러오기
         years_df = pd.read_csv(os.path.join(path, "years.tsv"), delimiter="\t")
+        titles_df = pd.read_csv(os.path.join(path, "titles.tsv"), delimiter="\t")
 
-        dfs = [genres_df]
+        dfs = [genres_df, writers_df, directors_df, years_df, titles_df]
 
         for df in dfs:
-            result_df = pd.merge(result_df, df, on="item", how="left")
+            result_df = pd.merge(result_df, df, on="item", how="left").fillna(0)
 
         # 결측치 처리
         data = handle_missing_value(result_df)
+
+        merged_data = merged_data.drop(columns=["title"])
 
         # 최종 생성된 데이터 프레임 csv 파일로 저장
         result_df.to_csv(os.path.join(path, "result_df.csv"), mode="w", index=False)

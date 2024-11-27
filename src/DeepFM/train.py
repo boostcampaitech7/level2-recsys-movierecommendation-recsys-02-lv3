@@ -2,7 +2,7 @@ import torch
 import time
 import numpy as np
 import os
-from src.loss.loss_fn import deepfm_loss
+from loss import deepfm_loss
 import torch.optim as optimizer_module
 import torch.optim.lr_scheduler as scheduler_module
 from tqdm import tqdm
@@ -14,32 +14,16 @@ update_count = 0
 
 def train(args, model, train_dataset, valid_dataset, logger, setting):
 
-    # Optimizer and Scheduler 설정
+    # Optimizer 설정
     trainable_params = filter(lambda p: p.requires_grad, model.parameters())
     optimizer = getattr(optimizer_module, args.optimizer.type)(
         trainable_params, **args.optimizer.args
     )
 
-    if args.lr_scheduler.use:
-        args.lr_scheduler.args = {
-            k: v
-            for k, v in args.lr_scheduler.args.items()
-            if k
-            in getattr(
-                scheduler_module, args.lr_scheduler.type
-            ).__init__.__code__.co_varnames
-        }
-        lr_scheduler = getattr(scheduler_module, args.lr_scheduler.type)(
-            optimizer, **args.lr_scheduler.args
-        )
-    else:
-        lr_scheduler = None
-
     # wandb 설정
     if args.wandb:
         import wandb
 
-    best_r10 = -np.inf
     N = len(train_dataset)
 
     # loader
@@ -96,7 +80,7 @@ def train(args, model, train_dataset, valid_dataset, logger, setting):
 
         msg = ""
         msg += "| end of epoch {:3d} | time: {:4.2f}s | AUC {:5.3f} | ACC {:5.3f} | RECALL {:5.3f} | train_loss {:.3f}".format(
-            epoch, time.time() - start_time, AUC, ACC, RECALL * 0.1, train_loss
+            epoch, time.time() - start_time, AUC, ACC, RECALL, train_loss
         )
         print("-" * 89)
         print(msg)
@@ -116,7 +100,7 @@ def train(args, model, train_dataset, valid_dataset, logger, setting):
                     "Valid Loss": valid_loss,
                     "AUC": AUC,
                     "ACC": ACC,
-                    "RECALL": RECALL * 0.1,
+                    "RECALL": RECALL,
                 }
             )
 
@@ -218,7 +202,7 @@ def test(args, model, dataset, setting, checkpoint=None):
     print("=" * 89)
     print(
         "| End of training | AUC {:5.3f} | ACC {:5.3f} | RECALL {:5.3f} | ".format(
-            AUC, ACC, RECALL * 0.1
+            AUC, ACC, RECALL
         )
     )
     print("=" * 89)

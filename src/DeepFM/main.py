@@ -4,13 +4,19 @@ from omegaconf import OmegaConf
 import pandas as pd
 import torch.optim as optimizer_module
 import torch.optim.lr_scheduler as scheduler_module
-import src.models as model_module
-from src.utils.util import Logger, Setting
-from src.trainers.inference import deepfm_predict
-from src.trainers.DeepFM_train import train, evaluate, test
-from src.data.DeepFM.DeepFM_dataset import train_valid_test_split
+import DeepFM as model_module
+from inference import deepfm_predict
+from train import train
+from dataset import train_valid_test_split
 import torch
 import os
+import sys
+
+current_dir = os.path.dirname(os.path.abspath(__file__))
+parent_dir = os.path.dirname(current_dir)
+sys.path.append(parent_dir)
+
+from utils.util import Logger, Setting
 
 
 def main(args):
@@ -47,10 +53,6 @@ def main(args):
     ##### running model(train & evaluate & save model)
     print("-" * 15 + f"{args.model} TRAINING" + "-" * 15)
     best_model = train(args, model, train_dataset, valid_dataset, logger, setting)
-
-    ##### inference
-    # print("-" * 15 + f"{args.model} PREDICT" + "-" * 15)
-    # model = test(args, best_model, test_dataset, setting)
 
     ##### save predict
     print("-" * 15 + f"SAVE {args.model} PREDICT" + "-" * 15)
