@@ -6,12 +6,7 @@ from scipy import sparse
 
 
 ##### RecVAE dataset을 위한 preprocessing 함수들 #####
-
-def _get_count(tp, id):
-    playcount_groupbyid = tp[[id]].groupby(id, as_index=False)
-    return playcount_groupbyid.size()
-
-def split_train_test_proportion(data, test_prop=0.2):
+def _split_train_test_proportion(data, test_prop=0.2):
     data_grouped_by_user = data.groupby('user')
     tr_list, te_list = list(), list()
 
@@ -25,10 +20,19 @@ def split_train_test_proportion(data, test_prop=0.2):
         tr_list.append(group[np.logical_not(idx)])
         te_list.append(group[idx])
 
+
+        if i % 1000 == 0:
+            print("%d users sampled" % i)
+
     data_tr = pd.concat(tr_list)
     data_te = pd.concat(te_list)
 
     return data_tr, data_te
+
+def _get_count(tp, id):
+    playcount_groupbyid = tp[[id]].groupby(id, as_index=False)
+    return playcount_groupbyid.size()
+
 
 def _numerize(tp, user2idx, item2idx):
     uid = tp['user'].apply(lambda x: user2idx[x])
@@ -86,11 +90,11 @@ def _split_data(raw_data, tr_users, vd_users, te_users, unique_uid):
     
     vad_plays = raw_data.loc[raw_data['user'].isin(vd_users)]
     vad_plays = vad_plays.loc[vad_plays['item'].isin(unique_sid)]
-    vad_plays_tr, vad_plays_te = split_train_test_proportion(vad_plays)
+    vad_plays_tr, vad_plays_te = _split_train_test_proportion(vad_plays)
 
     test_plays = raw_data.loc[raw_data['user'].isin(te_users)]
     test_plays = test_plays.loc[test_plays['item'].isin(unique_sid)]
-    test_plays_tr, test_plays_te = split_train_test_proportion(test_plays)
+    test_plays_tr, test_plays_te = _split_train_test_proportion(test_plays)
 
     # output
     data = {
@@ -124,7 +128,7 @@ def data_load(args):
     data : dict
         학습 데이터와 user, item 정보가 담긴 사전 형식의 데이터를 반환합니다.
     """
-    print("load data")
+    
     train_df = pd.read_csv(args.dataset.data_path + 'train_ratings.csv', header=0)
 
     user_activity = _get_count(train_df, 'user')
@@ -142,4 +146,5 @@ def data_load(args):
     te_users = unique_uid[(n_users - n_heldout_users):]
     
     data = _split_data(train_df, tr_users, vd_users, te_users, unique_uid)
+    
     return data

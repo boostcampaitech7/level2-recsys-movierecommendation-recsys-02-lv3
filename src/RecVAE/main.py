@@ -4,6 +4,7 @@ import os
 import sys
 from omegaconf import OmegaConf
 import pandas as pd
+import torch
 import torch.optim as optimizer_module
 import torch.optim.lr_scheduler as scheduler_module
 import RecVAE as model_module
@@ -40,7 +41,6 @@ def main(args):
     valid_dataset = data_loader(args, data, datatype='validation')
     test_dataset = data_loader(args, data, datatype='test')
     
-    
     ##### model load
     print("-"*15 + f"init {args.model}" + "-"*15)
     model = getattr(model_module, args.model)(args.model_args[args.model]['hidden_dim'], args.model_args[args.model]['latent_dim'], args.model_args[args.model]['input_dim']).to(args.device)
@@ -52,7 +52,7 @@ def main(args):
 
     ##### inference
     print("-"*15 + f"{args.model} PREDICT" + "-"*15)
-    model = test(args, model, test_dataset, setting)
+    model = test(args, model, test_dataset, setting, checkpoint=args.checkpoint)
 
 
     ##### save predict
@@ -61,9 +61,9 @@ def main(args):
     total_dataset = data_loader(args, data, datatype='total')
     total_dataset = total_dataset.total_data
     
-    predicts = recvae_predict(args, model, total_dataset)
+    predicts, top_items = recvae_predict(args, model, total_dataset)
     
-    result = pd.DataFrame(predicts, columns=['user', 'item'])
+    result = pd.DataFrame(top_items, columns=['user', 'item'])
     result['user'] = result['user'].apply(lambda x : data['idx2user'][x])
     result['item'] = result['item'].apply(lambda x : data['id2item'][x])
     result = result.sort_values(by='user')
@@ -113,6 +113,11 @@ if __name__ == "__main__":
     arg('--other_params', '--op', '-op', type=ast.literal_eval)
     arg('--optimizer', '-opt', '--opt', type=ast.literal_eval)
     arg('--lr_scheduler', '-lr', '--lr', type=ast.literal_eval)
+    arg('--step', type=int, default=10)
+    arg('--gamma', type=float, default=0.004)
+    arg('--lambd', type=float, default=500)
+    arg('--alpha', type=float, default=1)
+    arg('--threshold', type=int, default=1000)
     arg('--train', '-t', '--t', type=ast.literal_eval)
     
     args = parser.parse_args()
@@ -137,13 +142,7 @@ if __name__ == "__main__":
         
         config_yaml.optimizer.args = {k: v for k, v in config_yaml.optimizer.args.items() 
                                     if k in getattr(optimizer_module, config_yaml.optimizer.type).__init__.__code__.co_varnames}
-        
-        if config_yaml.lr_scheduler.use == False:
-            del config_yaml.lr_scheduler.type, config_yaml.lr_scheduler.args
-        else:
-            config_yaml.lr_scheduler.args = {k: v for k, v in config_yaml.lr_scheduler.args.items() 
-                                            if k in getattr(scheduler_module, config_yaml.lr_scheduler.type).__init__.__code__.co_varnames}
-        
+
         if config_yaml.train.resume == False:
             del config_yaml.train.resume_path
 
