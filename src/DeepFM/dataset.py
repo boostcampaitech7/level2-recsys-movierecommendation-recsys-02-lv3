@@ -293,9 +293,9 @@ def data_load(args):
             result_df = pd.merge(result_df, df, on="item", how="left").fillna(0)
 
         # 결측치 처리
-        data = handle_missing_value(result_df)
+        result_df = handle_missing_value(result_df)
 
-        merged_data = merged_data.drop(columns=["title"])
+        result_df = result_df.drop(columns=["title"])
 
         # 최종 생성된 데이터 프레임 csv 파일로 저장
         result_df.to_csv(os.path.join(path, "result_df.csv"), mode="w", index=False)
