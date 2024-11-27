@@ -16,13 +16,12 @@ if __name__ == "__main__":
     arg('--config', '-c', '--c', type=str, 
         help='Configuration 파일을 설정합니다.', default='choi/level2-recsys-movierecommendation-recsys-02-lv3/configs/config.yaml')    
     arg('--model', '-m', '--m', type=str, 
-            choices=['MultiVAE', 'EASE', 'EASER', 'MF', 'BERT4Rec',' BERT4Rec-side-info'],
+            choices=['MultiVAE', 'EASE', 'EASER', 'MF', 'BERT4Rec','BERT4Rec_with_side_info'],
             help='학습 및 예측할 모델을 선택할 수 있습니다.')
     args = parser.parse_args()
     
     ######################## Config with yaml  
     config_args = OmegaConf.create(vars(args))
- 
     config_yaml = OmegaConf.load(args.config) if args.config else OmegaConf.create()
 
     # 선택된 모델 이름을 기반으로 model_names 불러오기
@@ -30,7 +29,6 @@ if __name__ == "__main__":
         config_yaml.model_names = {"name": config_yaml.model_names[args.model]["name"]}
     else:
         raise ValueError(f"Invalid model name: {args.model}")
-    
     
     
     model_name = config_yaml.model_names['name']
