@@ -7,6 +7,7 @@ import time
 import logging
 import json
 import importlib
+from collections import defaultdict
 
 
 class Setting:
@@ -312,3 +313,29 @@ def row_min_max_normalization(tensor):
     normalized_tensor = (tensor - row_min) / (row_max - row_min)
 
     return normalized_tensor
+
+
+def transform_df_to_dict(data):
+    data_dic = defaultdict(list)
+    data_df = {}
+    for u, i in tqdm(zip(data['user_idx'], data['item_idx'])):
+        data_dic[u].append(i)
+
+    for user in data_dic:
+        data_df[user] = data_dic[user]
+    
+    return data_df
+
+
+def get_total_probability(args, logit_list):
+    proba = np.stack(logit_list)
+    proba = torch.tensor(proba)
+    proba[proba == float('inf')] = float('-inf')
+    probabilities = F.softmax(proba, dim=1)
+
+    # 확률값 내림차순으로 정렬
+    sorted_probabilities, sorted_indices = torch.sort(probabilities, descending=True)
+    save_dir = os.path.join(args.predict_dir, 'BERT4Rec.npy')
+    np.save(save_dir, sorted_probabilities.cpu().numpy())
+
+    print("Save the npy file successfully!")
