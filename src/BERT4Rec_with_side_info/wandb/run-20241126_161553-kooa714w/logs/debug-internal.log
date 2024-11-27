@@ -1,0 +1,16 @@
+{"time":"2024-11-26T16:15:53.095680491Z","level":"INFO","msg":"using version","core version":"0.18.7"}
+{"time":"2024-11-26T16:15:53.095697503Z","level":"INFO","msg":"created symlink","path":"/data/ephemeral/home/level2-recsys-movierecommendation-recsys-02-lv3/src/BERT4Rec_with_side_info/wandb/run-20241126_161553-kooa714w/logs/debug-core.log"}
+{"time":"2024-11-26T16:15:53.197614684Z","level":"INFO","msg":"created new stream","id":"kooa714w"}
+{"time":"2024-11-26T16:15:53.197652727Z","level":"INFO","msg":"stream: started","id":"kooa714w"}
+{"time":"2024-11-26T16:15:53.197702142Z","level":"INFO","msg":"writer: Do: started","stream_id":"kooa714w"}
+{"time":"2024-11-26T16:15:53.197715895Z","level":"INFO","msg":"sender: started","stream_id":"kooa714w"}
+{"time":"2024-11-26T16:15:53.19776794Z","level":"INFO","msg":"handler: started","stream_id":"kooa714w"}
+{"time":"2024-11-26T16:15:53.821767094Z","level":"INFO","msg":"Starting system monitor"}
+{"time":"2024-11-26T16:18:04.994437039Z","level":"INFO","msg":"stream: closing","id":"kooa714w"}
+{"time":"2024-11-26T16:18:04.994468228Z","level":"INFO","msg":"Stopping system monitor"}
+{"time":"2024-11-26T16:18:04.995231315Z","level":"INFO","msg":"Stopped system monitor"}
+{"time":"2024-11-26T16:18:05.982529293Z","level":"INFO","msg":"fileTransfer: Close: file transfer manager closed"}
+{"time":"2024-11-26T16:18:06.276725224Z","level":"INFO","msg":"handler: closed","stream_id":"kooa714w"}
+{"time":"2024-11-26T16:18:06.276760513Z","level":"INFO","msg":"writer: Close: closed","stream_id":"kooa714w"}
+{"time":"2024-11-26T16:18:06.276848492Z","level":"INFO","msg":"sender: closed","stream_id":"kooa714w"}
+{"time":"2024-11-26T16:18:06.276860362Z","level":"INFO","msg":"stream: closed","id":"kooa714w"}

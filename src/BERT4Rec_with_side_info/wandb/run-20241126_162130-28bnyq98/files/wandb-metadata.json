@@ -1,0 +1,46 @@
+{
+  "os": "Linux-5.4.0-99-generic-x86_64-with-glibc2.31",
+  "python": "3.10.13",
+  "startedAt": "2024-11-26T16:21:30.517537Z",
+  "args": [
+    "--c",
+    "config.yaml"
+  ],
+  "program": "/data/ephemeral/home/level2-recsys-movierecommendation-recsys-02-lv3/src/BERT4Rec_with_side_info/main.py",
+  "codePath": "src/BERT4Rec_with_side_info/main.py",
+  "git": {
+    "remote": "git@github.com:boostcampaitech7/level2-recsys-movierecommendation-recsys-02-lv3.git",
+    "commit": "2332f9455ec79da58315a1fc7444be5cbc941054"
+  },
+  "root": "/data/ephemeral/home/level2-recsys-movierecommendation-recsys-02-lv3/src/BERT4Rec_with_side_info",
+  "host": "instance-13912",
+  "username": "root",
+  "executable": "/opt/conda/bin/python",
+  "codePathLocal": "main.py",
+  "cpu_count": 8,
+  "cpu_count_logical": 8,
+  "gpu": "Tesla V100-SXM2-32GB",
+  "gpu_count": 1,
+  "disk": {
+    "/": {
+      "total": "52573995008",
+      "used": "39430168576"
+    }
+  },
+  "memory": {
+    "total": "94903173120"
+  },
+  "cpu": {
+    "count": 8,
+    "countLogical": 8
+  },
+  "gpu_nvidia": [
+    {
+      "name": "Tesla V100-SXM2-32GB",
+      "memoryTotal": "34359738368",
+      "cudaCores": 5120,
+      "architecture": "Volta"
+    }
+  ],
+  "cudaVersion": "12.2"
+}

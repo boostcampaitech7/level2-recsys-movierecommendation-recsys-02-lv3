@@ -1,0 +1,16 @@
+{"time":"2024-11-26T15:27:56.372446345Z","level":"INFO","msg":"using version","core version":"0.18.7"}
+{"time":"2024-11-26T15:27:56.372464428Z","level":"INFO","msg":"created symlink","path":"/data/ephemeral/home/level2-recsys-movierecommendation-recsys-02-lv3/src/BERT4Rec_with_side_info/wandb/run-20241126_152756-l725lwbs/logs/debug-core.log"}
+{"time":"2024-11-26T15:27:56.474590816Z","level":"INFO","msg":"created new stream","id":"l725lwbs"}
+{"time":"2024-11-26T15:27:56.474632516Z","level":"INFO","msg":"stream: started","id":"l725lwbs"}
+{"time":"2024-11-26T15:27:56.474675537Z","level":"INFO","msg":"writer: Do: started","stream_id":"l725lwbs"}
+{"time":"2024-11-26T15:27:56.474700043Z","level":"INFO","msg":"sender: started","stream_id":"l725lwbs"}
+{"time":"2024-11-26T15:27:56.474768685Z","level":"INFO","msg":"handler: started","stream_id":"l725lwbs"}
+{"time":"2024-11-26T15:27:57.147787804Z","level":"INFO","msg":"Starting system monitor"}
+{"time":"2024-11-26T15:28:33.666541656Z","level":"INFO","msg":"stream: closing","id":"l725lwbs"}
+{"time":"2024-11-26T15:28:33.666578841Z","level":"INFO","msg":"Stopping system monitor"}
+{"time":"2024-11-26T15:28:33.667385409Z","level":"INFO","msg":"Stopped system monitor"}
+{"time":"2024-11-26T15:28:34.63165887Z","level":"INFO","msg":"fileTransfer: Close: file transfer manager closed"}
+{"time":"2024-11-26T15:28:34.945886059Z","level":"INFO","msg":"handler: closed","stream_id":"l725lwbs"}
+{"time":"2024-11-26T15:28:34.945934194Z","level":"INFO","msg":"writer: Close: closed","stream_id":"l725lwbs"}
+{"time":"2024-11-26T15:28:34.945988926Z","level":"INFO","msg":"sender: closed","stream_id":"l725lwbs"}
+{"time":"2024-11-26T15:28:34.946248859Z","level":"INFO","msg":"stream: closed","id":"l725lwbs"}
