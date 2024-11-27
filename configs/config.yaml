@@ -18,4 +18,6 @@ model_names:
     BERT4Rec:
       name: 'BERT4Rec'
     EASER:
-      name: 'EASER'
+      name: 'EASER'   
+    BERT4Rec_with_side_info:
+      name: 'BERT4Rec_with_side_info'
