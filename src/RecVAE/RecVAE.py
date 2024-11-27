@@ -83,7 +83,7 @@ class RecVAE(nn.Module):
         self.decoder = nn.Linear(self.latent_dim, self.input_dim)
         self.prior = Compositeprior(self.hidden_dim, self.latent_dim, self.input_dim)
 
-    def forward(self, user_ratings, calculate_loss, beta=None, gamma=1, dropout_rate=0.5):
+    def forward(self, user_ratings, calculate_loss=True, beta=None, gamma=1, dropout_rate=0.5):
         mu, logvar = self.encoder(user_ratings, dropout_rate=dropout_rate)
 
         def reparameterize(self, mu, logvar):

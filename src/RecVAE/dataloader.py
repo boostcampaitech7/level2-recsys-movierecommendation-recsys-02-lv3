@@ -22,44 +22,21 @@ class RecVAEDataset(Dataset):
             self.data = self._load_total_data(self.data)
         else:
             raise ValueError("datatype should be in [train, validation, test, total]")
-
-    @property
-    def total_data(self):
-        if self.datatype == 'total':
-            return self.data
-        else:
-            raise ValueError("total_data property is only available for 'total' datatype.")
-
-
+        
     def __len__(self):
         if self.datatype in ['validation', 'test']:
             return self.data_tr.shape[0]
         else:
             return self.data.shape[0]
         
+
     def __getitem__(self, idx):
         if self.datatype in ['validation', 'test']:
-            return self._sparse_to_tensor(self.data_tr[idx]), self._sparse_to_tensor(self.data_te[idx])
+            return self.data_tr[idx], self.data_te[idx]
         else:
-            return self._sparse_to_tensor(self.data[idx])
-
-
-    # csr_matrix to tensor
-    def _sparse_to_tensor(self, sparse_matrix):
-        '''
-        CSR matrix -> Tensor 변환 함수
-        '''
-        if isinstance(sparse_matrix, torch.Tensor):
-            return sparse_matrix.to(self.device)
-        elif isinstance(sparse_matrix, sparse.csr_matrix):
-            dense_matrix = sparse_matrix.toarray()
-            return torch.FloatTensor(dense_matrix).to(self.device)
+            return self.data[idx]
         
-        else:
-            raise ValueError("Unsupported matrix type")
 
-        
-        
     def _load_total_data(self, data):
         tp = data['total_data']
         n_users = tp['uid'].max() + 1
@@ -69,8 +46,6 @@ class RecVAEDataset(Dataset):
         total_data = sparse.csr_matrix((np.ones_like(rows),
                                         (rows, cols)), dtype='float64',
                                        shape=(n_users, n_items))
-        
-        total_data = self._sparse_to_tensor(total_data)
 
         return total_data
 
@@ -85,8 +60,7 @@ class RecVAEDataset(Dataset):
             dtype='float64',
             shape=(n_users, self.n_items)
         )
-
-        train_data = self._sparse_to_tensor(train_data)
+        
         return train_data
     
 
@@ -115,4 +89,5 @@ class RecVAEDataset(Dataset):
             dtype='float64',
             shape=(end_idx - start_idx + 1, self.n_items)
         )
+
         return data_tr, data_te

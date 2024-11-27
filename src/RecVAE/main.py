@@ -6,9 +6,9 @@ from omegaconf import OmegaConf
 import pandas as pd
 import torch
 import torch.optim as optimizer_module
-import torch.optim.lr_scheduler as scheduler_module
 import RecVAE as model_module
 from inference import recvae_predict
+from dataloader import RecVAEDataset
 from train import train, test
 
 current_dir = os.path.dirname(os.path.abspath(__file__)) 
@@ -35,11 +35,10 @@ def main(args):
     print("-"*15 + f"{args.model} Load Data" + "-"*15)
 
     data = setting.model_modular(args, 'dataset', 'data_load')(args)
-    data_loader = setting.model_modular(args, 'dataloader')
-    
-    train_dataset = data_loader(args, data, datatype='train')
-    valid_dataset = data_loader(args, data, datatype='validation')
-    test_dataset = data_loader(args, data, datatype='test')
+
+    train_dataset = RecVAEDataset(args=args, data=data, datatype='train').data
+    valid_dataset = RecVAEDataset(args=args, data=data, datatype='validation')
+    test_dataset = RecVAEDataset(args=args, data=data, datatype='test')
     
     ##### model load
     print("-"*15 + f"init {args.model}" + "-"*15)
@@ -52,15 +51,15 @@ def main(args):
 
     ##### inference
     print("-"*15 + f"{args.model} PREDICT" + "-"*15)
-    model = test(args, model, test_dataset, setting, checkpoint=args.checkpoint)
+    model = test(args, model, test_dataset, setting)
 
 
     ##### save predict
     print("-"*15 + f"SAVE {args.model} PREDICT" + "-"*15)
     
-    total_dataset = data_loader(args, data, datatype='total')
-    total_dataset = total_dataset.total_data
+    total_dataset = RecVAEDataset(args=args, data=data, datatype='total').data
     
+    # predicts: ensemble 시 사용
     predicts, top_items = recvae_predict(args, model, total_dataset)
     
     result = pd.DataFrame(top_items, columns=['user', 'item'])

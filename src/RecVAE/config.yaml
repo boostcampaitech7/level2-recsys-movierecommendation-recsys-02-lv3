@@ -1,4 +1,4 @@
-checkpoint: /data/ephemeral/home/src/RecVAE/saved/RecVAE/checkpoint/20241127_102713_RecVAE_best.pt
+checkpoint: /data/ephemeral/home/src/RecVAE/saved/RecVAE/checkpoint/20241127_145459_RecVAE_best.pt
 seed: 1111
 predict: False
 device: cuda
@@ -19,8 +19,9 @@ dataset:
     test_prop : 0.2
 
 dataloader:
+    device: cuda
     data_path: /data/ephemeral/home/src/    # 데이터 load 경로(개인 폴더 경로로 설정해야함)
-    batch_size: 2         # 배치 사이즈
+    batch_size: 500         # 배치 사이즈
     shuffle: True           # 학습 데이터 셔플 여부
     num_workers: 0          # 멀티프로세서 수. 0: 메인프로세서만 사용
 
@@ -32,11 +33,12 @@ optimizer:
         amsgrad: False                           # 예) Adam 등 / amsgrad 사용 여부
 
 train:
-    epochs: 50
+    epochs: 100
     not_alternating: False
     log_dir: saved/RecVAE/log                  # 로그 저장 경로
     ckpt_dir: saved/RecVAE/checkpoint    # 모델 저장 경로
     submit_dir: saved/RecVAE/submit            # 예측 저장 경로
-    save_best_model: True               # True: val_loss가 최소인 모델 저장 / False: 모든 모델 저장
+    save_dir: 
+    save_best_model: False               # True: val_loss가 최소인 모델 저장 / False: 모든 모델 저장
     resume: False                               # 이어서 학습할 경우 True
     resume_path: saved/checkpoint/RecVAE.pt    # 이어서 학습할 모델 경로

@@ -21,14 +21,12 @@ def recvae_predict(args, model, data, k = 10):
     top_items = []
     
     with torch.no_grad():
-        print("recvae predict")
-        data_tensor = torch.Tensor(data).to(args.device)
+        data_tensor = torch.Tensor(data.toarray()).to(args.device)
         result = []
         for batch_idx, data in enumerate(data_tensor):
             predicts = model(data, calculate_loss=False)
             predicts[data.nonzero()] = -np.inf
             result.append(predicts)
-        print("generate top k")
         _ , top_ids = torch.topk(torch.stack(result).to(args.device).float(), k)
         for user_id, item_ids in enumerate(top_ids):
             for item_id in item_ids:
