@@ -23,3 +23,5 @@ model_names:
       name: 'BERT4Rec_with_side_info'
     RecVAE:
       name: 'RecVAE'
+    DeepFM:
+      name: 'DeepFM'
