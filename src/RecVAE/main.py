@@ -59,11 +59,16 @@ def main(args):
     
     total_dataset = RecVAEDataset(args=args, data=data, datatype='total').data
     
-    # predicts: ensemble 시 전체 아이템에 대한 확률값 필요시 사용
-    predicts, top_items = recvae_predict(args, model, total_dataset)
+    # predict: ensemble 시 전체 아이템에 대한 확률값 필요시 사용
+    predict, top_items = recvae_predict(args, model, total_dataset)
+    
+    # output & index 정보 저장
+    setting.save_file(args, predict)
+    setting.save_file(args, data['id2user'], '.pkl', 'user')
+    setting.save_file(args, data['id2item'], '.pkl', 'item')
     
     result = pd.DataFrame(top_items, columns=['user', 'item'])
-    result['user'] = result['user'].apply(lambda x : data['idx2user'][x])
+    result['user'] = result['user'].apply(lambda x : data['id2user'][x])
     result['item'] = result['item'].apply(lambda x : data['id2item'][x])
     result = result.sort_values(by='user')
 
