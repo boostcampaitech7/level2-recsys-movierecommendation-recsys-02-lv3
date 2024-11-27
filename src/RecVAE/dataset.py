@@ -20,10 +20,6 @@ def _split_train_test_proportion(data, test_prop=0.2):
         tr_list.append(group[np.logical_not(idx)])
         te_list.append(group[idx])
 
-
-        if i % 1000 == 0:
-            print("%d users sampled" % i)
-
     data_tr = pd.concat(tr_list)
     data_te = pd.concat(te_list)
 
