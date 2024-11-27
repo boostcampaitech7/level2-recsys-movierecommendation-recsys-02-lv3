@@ -326,7 +326,7 @@ def transform_df_to_dict(data):
     return data_df
 
 
-def get_total_probability(args, logit_list):
+def get_total_probability(logit_list):
     proba = np.stack(logit_list)
     proba = torch.tensor(proba)
     proba[proba == float('inf')] = float('-inf')
@@ -334,7 +334,5 @@ def get_total_probability(args, logit_list):
 
     # 확률값 내림차순으로 정렬
     sorted_probabilities, sorted_indices = torch.sort(probabilities, descending=True)
-    save_dir = os.path.join(args.predict_dir, 'BERT4Rec.npy')
-    np.save(save_dir, sorted_probabilities.cpu().numpy())
-
-    print("Save the npy file successfully!")
+    
+    return sorted_probabilities
