@@ -172,7 +172,7 @@ def test(args, model, test_data,  setting, checkpoint=None):
     # Run on test data
     r = evaluate(args.dataloader, model, data_in=data_in, data_out=data_out)
     print('=' * 89)
-    print('| End of training | r20 {:4.2f} | r50 {:4.2f}'.format(r[0],r[1]))
+    print('| End of training | r10 {:4.2f} | r50 {:4.2f}'.format(r[0],r[1]))
     print('=' * 89)
     
     return model

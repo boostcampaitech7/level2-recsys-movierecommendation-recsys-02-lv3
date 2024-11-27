@@ -1,29 +1,9 @@
 import numpy as np
 import pandas as pd
-import argparse
-import yaml
 from scipy import sparse
 
 
 ##### RecVAE dataset을 위한 preprocessing 함수들 #####
-def _split_train_test_proportion(data, test_prop=0.2):
-    data_grouped_by_user = data.groupby('user')
-    tr_list, te_list = list(), list()
-
-
-    for i, (_, group) in enumerate(data_grouped_by_user):
-        n_items_u = len(group)
-
-        idx = np.zeros(n_items_u, dtype='bool')
-        idx[np.random.choice(n_items_u, size=int(test_prop * n_items_u), replace=False).astype('int64')] = True
-
-        tr_list.append(group[np.logical_not(idx)])
-        te_list.append(group[idx])
-
-    data_tr = pd.concat(tr_list)
-    data_te = pd.concat(te_list)
-
-    return data_tr, data_te
 
 def _get_count(tp, id):
     playcount_groupbyid = tp[[id]].groupby(id, as_index=False)
@@ -46,6 +26,39 @@ def tensor_to_csr(tensor):
     return csr_matrix
 
 ##### data split function
+def _split_train_test_proportion(data, test_prop=0.2):
+    """
+    validation, test data를 train/test로 분할하는 함수입니다.
+    
+    Parameters
+    ----------
+    data : 유저 - 아이템 상호작용 데이터
+    test_prop : train/test 분할 비율
+
+    Returns
+    -------
+    data_tr : pandas.DataFrame
+        데이터의 Train 부분.
+    data_te : pandas.DataFrame
+        데이터의 Test 부분.
+    """
+    data_grouped_by_user = data.groupby('user')
+    tr_list, te_list = list(), list()
+
+
+    for i, (_, group) in enumerate(data_grouped_by_user):
+        n_items_u = len(group)
+
+        idx = np.zeros(n_items_u, dtype='bool')
+        idx[np.random.choice(n_items_u, size=int(test_prop * n_items_u), replace=False).astype('int64')] = True
+
+        tr_list.append(group[np.logical_not(idx)])
+        te_list.append(group[idx])
+
+    data_tr = pd.concat(tr_list)
+    data_te = pd.concat(te_list)
+
+    return data_tr, data_te
 
 def _split_data(raw_data, tr_users, vd_users, te_users, unique_uid):
     """

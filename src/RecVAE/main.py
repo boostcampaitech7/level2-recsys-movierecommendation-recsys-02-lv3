@@ -59,7 +59,7 @@ def main(args):
     
     total_dataset = RecVAEDataset(args=args, data=data, datatype='total').data
     
-    # predicts: ensemble 시 사용
+    # predicts: ensemble 시 전체 아이템에 대한 확률값 필요시 사용
     predicts, top_items = recvae_predict(args, model, total_dataset)
     
     result = pd.DataFrame(top_items, columns=['user', 'item'])
@@ -160,7 +160,7 @@ if __name__ == "__main__":
                    resume="allow")
         config_yaml.run_href = wandb.run.get_url()
 
-        wandb.run.log_code("./src/RecVAE")  # MultiVAE 내의 모든 파일을 업로드. Artifacts에서 확인 가능
+        wandb.run.log_code("./src/RecVAE")
     
     
     main(config_yaml)
