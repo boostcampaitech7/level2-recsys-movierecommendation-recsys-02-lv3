@@ -61,12 +61,13 @@ def main(args):
                                               args.model_args.BERT4Rec_with_side_info.max_len, args.model_args.BERT4Rec_with_side_info.dropout_rate, args.device)
 
     model = model.to(args.device)
-
+    
     if os.path.exists(args.train.ckpt_dir):
         print("Load model from pretrained folder")
-        model_path = os.path.join(args.train.ckpt_dir, 'best.pth')
+        model_path = os.path.join(args.train.ckpt_dir, 'best.pt')
         model_state_dict = torch.load(model_path, map_location=args.device)
         model.load_state_dict(model_state_dict)
+
     else:
         ##### running model(train & evaluate & save model)
         print("-"*15 + f"{args.model} TRAINING" + "-"*15)
@@ -114,9 +115,9 @@ if __name__ == "__main__":
     arg = parser.add_argument
     str2dict = lambda x: {k:int(v) for k,v in (i.split(':') for i in x.split(','))}
     
-    
+
     arg('--config', '-c', '--c', type=str, 
-        help='Configuration 파일을 설정합니다.', required=True)
+        help='Configuration 파일을 설정합니다.', default = '/data/ephemeral/home/level2-recsys-movierecommendation-recsys-02-lv3/src/BERT4Rec_with_side_info/config.yaml')
     arg('--predict', '-p', '--p', '--pred', type=ast.literal_eval, 
         help='학습을 생략할지 여부를 설정할 수 있습니다.')
     arg('--model', '-m', '--m', type=str, 
