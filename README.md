@@ -1,6 +1,3 @@
 ```bash
-# MultiVAE
-$ python main.py -m MultiVAE
-
-# EASE
-$ python main.py -m EASE
+# ensemble
+$ python main.py -m MultiVAE EASE -sm min_max -ew 1 3
