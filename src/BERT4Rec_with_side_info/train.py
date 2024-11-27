@@ -18,7 +18,8 @@ from model import ScaledDotProductAttention, MultiHeadAttention, PositionwiseFee
 
 def train(args, model, train_dataloader, valid_dataloader, logger):
     output_dir = args.train.ckpt_dir
-    os.mkdir(output_dir)
+    os.makedirs(output_dir, exist_ok=True)
+
     best_val_acc = 0
     best_val_loss = np.inf
 
@@ -64,8 +65,8 @@ def train(args, model, train_dataloader, valid_dataloader, logger):
                 y_hat = _logits[:,:].argsort()[:,:,-1].view(-1)
 
                 # size matching
-                _logits = _logits.view(-1, _logits.size(-1))   # [51200, 6808]
-                _labels = _labels.view(-1).to(args.device)         # 51200
+                _logits = _logits.view(-1, _logits.size(-1))   # [6400, 6808]
+                _labels = _labels.view(-1).to(args.device)         # 6400
 
                 _loss = criterion(_logits, _labels)
                             
@@ -87,12 +88,12 @@ def train(args, model, train_dataloader, valid_dataloader, logger):
             ##### 이 부분 best model 선택할 때 acc로 하는 건 어떰
             if best_val_acc < valid_acc:
                 print(f"New best model for val acc : {valid_acc * 100:.5f}! saving the best model..")
-                torch.save(model, f"{output_dir}/best.pth")
+                torch.save(model, f"{output_dir}/best.pt")
                 best_val_loss = valid_loss_avg
                 best_val_acc = valid_acc
                 stop_counter = 0
                 
-            torch.save(model, f"{output_dir}/last.pth")
+            torch.save(model, f"{output_dir}/last.pt")
                 
             print(
                 f"Validation Accuracy : {valid_acc:4.2%}, Validation Loss: {valid_loss_avg:.5f} || "
@@ -100,7 +101,7 @@ def train(args, model, train_dataloader, valid_dataloader, logger):
             )
             print('=' * 120)
         
-        logger.log(epoch=epoch, train_loss=train_loss_avg, valid_loss=valid_loss_avg)
+        logger.log(epoch=epoch, train_loss=train_loss_avg, valid_loss=valid_loss_avg, valid_r10 = 0)
 
     logger.close()
 
