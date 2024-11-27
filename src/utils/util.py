@@ -209,6 +209,12 @@ class Setting:
 
             return latest_user_dict, latest_item_dict
 
+        elif file_extension == ".csv":
+        # .csv 파일 처리: 가장 최신 파일 경로 반환
+            latest_file = max(files, key=lambda x: x.split('_')[0] + x.split('_')[1])
+            latest_file_path = os.path.join(file_path, latest_file)
+            return latest_file_path
+
         else:
             # .npy 파일에 대한 처리
             latest_file = max(files, key=lambda x: x.split("_")[0] + x.split("_")[1])
