@@ -18,6 +18,7 @@ model: BERT4Rec_with_side_info       # 모델 선택
 run_name: 'jay : BERT4Rec_with_side_info'
 wandb: True                               # wandb 사용 여부
 wandb_project: 'lv2.movie_recommendation'  # wandb 프로젝트 이름
+predict_dir: '../../saved/ensemble'
 
 model_args:     # model에 해당하는 파라미터만 실질적으로 사용됩니다.
     MultiVAE:
