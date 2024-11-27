@@ -17,7 +17,7 @@ from metrics import recall_at_k
 current_dir = os.path.dirname(os.path.abspath(__file__)) 
 parent_dir = os.path.dirname(current_dir)
 sys.path.append(parent_dir)
-from utils.util import Logger, Setting, transform_df_to_dict
+from utils.util import Logger, Setting, transform_df_to_dict, get_total_probability
 
 def main(args):
 
@@ -71,7 +71,7 @@ def main(args):
 
     ##### inference
     print("-"*15 + f"{args.model} INFERENCE" + "-"*15)
-    predict_df = inference(model, data['num_user'], data['num_item'], data['train_df'], data['user2idx'], data['item2idx'], args.model_args.BERT4Rec_with_side_info.max_len, data['item_genre_dic'])
+    predict_df, _ = inference(model, data['num_user'], data['num_item'], data['train_df'], data['user2idx'], data['item2idx'], args.model_args.BERT4Rec_with_side_info.max_len, data['item_genre_dic'])
 
     transform_predict_df = predict_df.copy()
     transform_predict_df['user_idx'] = transform_predict_df['user'].apply(lambda x: data['user2idx'][x])
@@ -85,8 +85,10 @@ def main(args):
 
     ##### predict with total data
     print("-"*15 + f"SAVE {args.model} PREDICT" + "-"*15)
-    final_predict = inference(model, data['num_user'], data['num_item'], data['total_df'], data['user2idx'], data['item2idx'], args.model_args.BERT4Rec_with_side_info.max_len, data['item_genre_dic'])
-
+    final_predict, logit_list = inference(model, data['num_user'], data['num_item'], data['total_df'], data['user2idx'], data['item2idx'], args.model_args.BERT4Rec_with_side_info.max_len, data['item_genre_dic'])
+    
+    # save the submit & ensemble file
+    get_total_probability(args, logit_list)
     filename = setting.get_submit_filename(args)
     final_predict.to_csv(filename, index=False)
 
