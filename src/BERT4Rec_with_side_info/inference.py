@@ -20,6 +20,7 @@ def inference(model, num_user, num_item, train_df, user2idx, item2idx, max_len, 
     # inference
     model.eval()
     predict_list = []
+    logit_list = []
     for u in tqdm(range(num_user)):
         seq = (train_df[u] + [num_item + 1])[-max_len :]
         genre_seq = get_genre_seq(seq, item_genre_dic)
@@ -43,6 +44,7 @@ def inference(model, num_user, num_item, train_df, user2idx, item2idx, max_len, 
             predictions = -model(np.array([seq]), np.array(genre_seq))
             predictions = predictions[0][-1][1:]  # mask 제외
             predictions[used_items_list] = np.inf  # 사용한 아이템은 제외하기 위해 inf
+            logit_list.append(predictions.cpu().numpy())
             rank = predictions.argsort().argsort().tolist()
 
             for i in range(10):
@@ -57,4 +59,4 @@ def inference(model, num_user, num_item, train_df, user2idx, item2idx, max_len, 
     predict_df = pd.DataFrame(data=predict_list_idx, columns=["user", "item"])
     predict_df = predict_df.sort_values("user")
 
-    return predict_df
+    return predict_df, logit_list
