@@ -60,7 +60,7 @@ def main(args):
     total_dataset = RecVAEDataset(args=args, data=data, datatype='total').data
     
     # predict: ensemble 시 전체 아이템에 대한 확률값 필요시 사용
-    predict, top_items = recvae_predict(args, model, total_dataset)
+    predict, top_items = recvae_predict(args, model, total_dataset, k=20)
     
     # output & index 정보 저장
     setting.save_file(args, predict)
@@ -117,6 +117,7 @@ if __name__ == "__main__":
     arg('--other_params', '--op', '-op', type=ast.literal_eval)
     arg('--optimizer', '-opt', '--opt', type=ast.literal_eval)
     arg('--lr_scheduler', '-lr', '--lr', type=ast.literal_eval)
+    arg('--dropout', type=int, default=0.5)
     arg('--step', type=int, default=10)
     arg('--gamma', type=float, default=0.004)
     arg('--lambd', type=float, default=500)

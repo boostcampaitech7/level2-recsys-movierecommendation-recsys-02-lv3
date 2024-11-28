@@ -4,7 +4,7 @@
 seed: 0            # 시드 고정
 device: cuda
 predict_dir: saved/
-submit_dir: saved/ensemble/
+submit_dir: saved/submit/
 
 model_names:
     MultiVAE:
