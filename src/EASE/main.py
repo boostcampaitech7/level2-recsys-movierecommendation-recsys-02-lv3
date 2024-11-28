@@ -74,7 +74,7 @@ if __name__ == "__main__":
     
     
     arg('--config', '-c', '--c', type=str, 
-        help='Configuration 파일을 설정합니다.', default='./choi/level2-recsys-movierecommendation-recsys-02-lv3/src/EASE/config.yaml')
+        help='Configuration 파일을 설정합니다.', default='src/EASE/config.yaml')
     arg('--model', '-m', '--m', type=str, 
         default='EASE',
         help='학습 및 예측할 모델을 선택할 수 있습니다.')

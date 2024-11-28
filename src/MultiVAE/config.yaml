@@ -26,7 +26,7 @@ dataset:
     test_prop : 0.2
 
 dataloader:
-    data_path: ./choi/level2-recsys-movierecommendation-recsys-02-lv3/src/    # 데이터 load 경로(개인 폴더 경로로 설정해야함)
+    data_path: src/    # 데이터 load 경로(개인 폴더 경로로 설정해야함)
     batch_size: 250         # 배치 사이즈
     shuffle: True           # 학습 데이터 셔플 여부
     num_workers: 0          # 멀티프로세서 수. 0: 메인프로세서만 사용

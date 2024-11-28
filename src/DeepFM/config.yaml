@@ -6,7 +6,7 @@ memo: |-
 #   $ python main.py --config config.yaml --seed 2024
 #   과 같이 실행할 경우 seed는 0이 아닌 2024로 설정됩니다.
 
-checkpoint: 'saved/checkpoints/~.pt'   # 예측 시 불러올 모델 경로
+checkpoint: 'saved/checkpoints/DeepFM.pt'   # 예측 시 불러올 모델 경로
 seed: 0               # 시드 고정
 predict: False
 device: cuda          # 가능한 값 : cpu, cuda, mps
@@ -27,11 +27,11 @@ model_args:     # model에 해당하는 파라미터만 실질적으로 사용�
 
 
 dataset:
-    data_path: ../data/train/    # 데이터셋 경로
+    data_path: ./data/train/    # 데이터셋 경로
     valid_ratio: 0.2            # Train / Vaildation split
 
 dataloader:
-    data_path: ./
+    data_path: src/
     batch_size: 1024    # 배치 사이즈
     shuffle: True       # 학습 데이터 셔플 여부
     num_workers: 0      # 멀티프로세서 수. 0: 메인프로세서만 사용
@@ -67,12 +67,12 @@ lr_scheduler:
 
 train:
     epochs: 20                         # 학습 에폭 수
-    log_dir: saved/log                  # 로그 저장 경로
-    ckpt_dir: saved/checkpoint    # 모델 저장 경로
-    submit_dir: ../saved/submit            # 예측 저장 경로
+    log_dir: saved/DeepFM/log                  # 로그 저장 경로
+    ckpt_dir: saved/DeepFM/checkpoint    # 모델 저장 경로
+    submit_dir: saved/DeepFM/submit            # 예측 저장 경로
     save_best_model: True               # True: val_loss가 최소인 모델 저장 / False: 모든 모델 저장
     resume: False                               # 이어서 학습할 경우 True
-    resume_path: saved/checkpoint/~.pt    # 이어서 학습할 모델 경로
+    resume_path: saved/checkpoint/DeepFM.pt    # 이어서 학습할 모델 경로
     batch_size: 1024
 test:
     batch_size: 512

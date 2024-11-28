@@ -93,7 +93,7 @@ if __name__ == "__main__":
     
     
     arg('--config', '-c', '--c', type=str, 
-        help='Configuration 파일을 설정합니다.', default='/data/ephemeral/home/src/RecVAE/config.yaml')
+        help='Configuration 파일을 설정합니다.', default='src/RecVAE/config.yaml')
     arg('--predict', '-p', '--p', '--pred', type=ast.literal_eval, 
         help='학습을 생략할지 여부를 설정할 수 있습니다.')
     arg('--model', '-m', '--m', type=str, 

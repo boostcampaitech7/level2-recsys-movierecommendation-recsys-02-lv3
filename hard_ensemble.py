@@ -129,13 +129,3 @@ if __name__ == "__main__":
     print(OmegaConf.to_yaml(config_yaml))
 
     main(config_yaml) 
-    
-#####
-# directory = '/data/ephemeral/home/yusol/level2-recsys-movierecommendation-recsys-02-lv3/saved/ensemble'
-# models = ['BERT4Rec', 'EASER']
-# take_counts = [5, 5]
-# top_k = 10
-
-# model_csv_paths = [
-#     get_latest_file(directory, model, file_extension=".csv") for model in models
-# ]

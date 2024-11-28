@@ -154,7 +154,7 @@ if __name__ == "__main__":
         "--c",
         type=str,
         help="Configuration 파일을 설정합니다.",
-        default="./choi/level2-recsys-movierecommendation-recsys-02-lv3/src/EASE/config.yaml",
+        default="src/EASE/config.yaml",
     )
     arg(
         "--model",

@@ -25,3 +25,5 @@ model_names:
       name: 'RecVAE'
     DeepFM:
       name: 'DeepFM'
+    SASRec:
+      name: 'SASRec'

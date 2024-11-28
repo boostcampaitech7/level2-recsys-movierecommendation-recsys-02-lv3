@@ -1,4 +1,4 @@
-program: ./choi/level2-recsys-movierecommendation-recsys-02-lv3/main.py                    # 실행할 파일
+program: main.py                    # 실행할 파일
 name: "Sweep MultiVAE"              # Sweep + {model_name}
 project: lv2.movie_recommendation    # 프로젝트 명
 method: bayes                       # 파라미터 method
@@ -50,7 +50,7 @@ parameters:
     dataloader:
         parameters:
             data_path:          # 데이터로더 경로
-                value: ./choi/level2-recsys-movierecommendation-recsys-02-lv3/src/data/ 
+                value: src/data/ 
             batch_size:         # 배치 사이즈 (튜닝)
                 values: [250, 500, 1000]
             shuffle:            # 학습 데이터 셔플 여부
@@ -113,11 +113,11 @@ parameters:
             epochs:             # 학습 에폭 수
                 value: 20
             log_dir:            # 로그 저장 경로
-                value: saved/log
+                value: saved/MultiVAE/log
             ckpt_dir:           # 모델 저장 경로
-                value: saved/checkpoint    
+                value: saved/MultiVAE/checkpoint    
             submit_dir:         # 예측 저장 경로
-                value: saved/submit
+                value: saved/MultiVAE/submit
             save_best_model:    # True: val_loss가 최소인 모델 저장 / False: 모든 모델 저장
                 value: True
             resume:             # 이어서 학습할 경우 True

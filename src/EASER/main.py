@@ -17,9 +17,6 @@ import EASER as model_module
 import warnings
 warnings.filterwarnings(action="ignore")
 
-# utils_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'utils')
-# sys.path.append(utils_path)
-
 current_dir = os.path.dirname(os.path.abspath(__file__)) 
 parent_dir = os.path.dirname(current_dir)
 sys.path.append(parent_dir)
@@ -72,7 +69,7 @@ if __name__ == "__main__":
     
     
     arg('--config', '-c', '--c', type=str, 
-        help='Configuration 파일을 설정합니다.', default='./choi/level2-recsys-movierecommendation-recsys-02-lv3/src/EASER/config.yaml')
+        help='Configuration 파일을 설정합니다.', default='src/EASER/config.yaml')
     arg('--model', '-m', '--m', type=str, 
         default='EASER',
         help='학습 및 예측할 모델을 선택할 수 있습니다.')
@@ -97,9 +94,6 @@ if __name__ == "__main__":
     for key in config_args.keys():
         if config_args[key] is not None:
             config_yaml[key] = config_args[key]
-    
-        
-    # config_yaml.model_args = OmegaConf.create({config_yaml.model : config_yaml.model_args[config_yaml.model]})
 
     print(OmegaConf.to_yaml(config_yaml))
 

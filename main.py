@@ -13,9 +13,9 @@ if __name__ == "__main__":
     
     
     arg('--config', '-c', '--c', type=str, 
-        help='Configuration 파일을 설정합니다.', default='/data/ephemeral/home/configs/config.yaml')    
+        help='Configuration 파일을 설정합니다.', default='configs/config.yaml')    
     arg('--model', '-m', '--m', type=str, 
-            choices=['MultiVAE', 'EASE', 'EASER', 'MF', 'BERT4Rec','BERT4Rec_with_side_info', 'RecVAE'],
+            choices=['MultiVAE', 'EASE', 'EASER', 'MF', 'BERT4Rec','BERT4Rec_with_side_info', 'RecVAE', 'DeepFM', 'SASRec'],
             help='학습 및 예측할 모델을 선택할 수 있습니다.')
     args = parser.parse_args()
     

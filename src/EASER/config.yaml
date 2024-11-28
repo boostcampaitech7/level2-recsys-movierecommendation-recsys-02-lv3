@@ -30,7 +30,7 @@ dataset:
     valid_samples: 10                           # Validation 데이터 수
 
 dataloader:
-    data_path: ./choi/level2-recsys-movierecommendation-recsys-02-lv3/src/  # 데이터 load 경로
+    data_path: src/  # 데이터 load 경로
     shuffle: True                                # 학습 데이터 셔플 여부
     num_workers: 0                               # 멀티프로세서 수
 

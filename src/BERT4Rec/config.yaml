@@ -13,7 +13,7 @@ model: BERT4Rec                            # 모델 선택
 run_name: 'yusol : BERT4Rec'
 wandb: True                                # wandb 사용 여부
 wandb_project: 'lv2.movie_recommendation'  # wandb 프로젝트 이름
-predict_dir: '../saved/ensemble'
+predict_dir: 'saved/BERT4Rec/predict'
 
 model_args:     # BERT4Rec 모델에 해당하는 파라미터
     BERT4Rec:
