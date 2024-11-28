@@ -1,9 +1,9 @@
 model:
-  hidden_units: 50 
+  hidden_units: 256 
   num_heads: 1
   num_layers: 2
   dropout_rate: 0.5
-  max_len: 50
+  max_len: 300
  
 train:
   batch_size: 128
