@@ -4,7 +4,7 @@
 </p>
 </div>
 
-# 📚 LV.3 RecSys 프로젝트 : Movie Recommendation
+# 🍿 LV.3 RecSys 프로젝트 : Movie Recommendation
 
 
 
@@ -22,7 +22,7 @@
 |[<img src="https://github.com/user-attachments/assets/0c4ff6eb-95b0-4ee4-883c-b10c1a42be14" width=130>](https://github.com/park-jaeuk)|[<img src="https://github.com/user-attachments/assets/b6cff4bf-79c8-4946-896a-666dd54c63c7" width=130>](https://github.com/JaeEunSeo)|[<img src="https://github.com/user-attachments/assets/f6572f19-901b-4aea-b1c4-16a62a111e8d" width=130>](https://github.com/Cyberger)|[<img src="https://avatars.githubusercontent.com/u/112920170?v=4" width=130>](https://github.com/YusolCho)|[<img src="https://github.com/user-attachments/assets/a10088ec-29b4-47aa-bf6a-53520b6106ce" width=130>](https://github.com/choitaesoon)|[<img src="https://github.com/user-attachments/assets/7ab5112f-ca4b-4e54-a005-406756262384" width=130>](https://github.com/jinnk0)|
 |Data EDA, BERT4Rec with Side-information, Multi DAE|Data EDA, RecBole Setting, RecVAE|Baseline Setting, Modularization, SASRec, RecVAE|Data EDA, BERT4Rec, EASER, Hard Ensemble module|Baseline Setting, Modularization, EASE, Soft Ensemble module|Data EDA, DeepFM, MF with TF-IDF|
 ---
-## 📚 프로젝트 개요
+## 🎬 프로젝트 개요
 |    개요    | 설명 |
 |:---:| --- |
 | 주제 | 사용자의 영화 시청 이력 데이터를 기반으로 암묵적 피드백(implicit feedback)과 순차적 이력(time-ordered sequence)을 활용하여 추천 시스템을 개발합니다. 이 문제는 기존의 명시적 피드백(explicit feedback, 평점 기반) 방식과는 달리, 일부 시청 이력이 누락된 현실적인 시나리오를 다루며, 다양한 부가 정보(side-information)를 통합하여 추천 성능을 향상시키는 방법도 탐구합니다.  |
