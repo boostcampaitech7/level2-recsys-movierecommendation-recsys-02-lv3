@@ -95,8 +95,8 @@ def main(args):
     sorted_probabilities = get_total_probability(logit_list)
 
     setting.save_file(args, sorted_probabilities, file_extension=".npy", type = None)
-    setting.save_file(args, sorted_probabilities, '.pkl', 'user')
-    setting.save_file(args, sorted_probabilities, '.pkl', 'item')
+    setting.save_file(args, data['idx2user'], '.pkl', 'user')
+    setting.save_file(args, data['idx2item'], '.pkl', 'item')
 
     filename = setting.get_submit_filename(args)
     final_predict.to_csv(filename, index=False)
