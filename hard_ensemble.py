@@ -6,6 +6,26 @@ import pandas as pd
 from omegaconf import OmegaConf
 from src.utils.util import Setting
 
+def ranking_priority_sort(user, model_results, selected_items, top_k):
+    for _ in range(10):
+        for model_idx, model_result in enumerate(model_results):
+            model_items = model_result[model_result["user"] == user]["item"].tolist()
+            leftover_items = [item for item in model_items if item not in selected_items]
+            if _ >= len(leftover_items):
+                # 교집합 아이템을 제외한 아이템이 더 없을 경우, 다음 모델의 결과값으로 넘어갑니다.
+                continue
+            selected_items.append(leftover_items[_])
+            
+        if len(selected_items) >= 10:
+            selected_items = selected_items[:top_k]
+            return selected_items
+
+def model_priority_sort(user, model_results, selected_items, num_list, top_k):
+    for model_idx, model_result in enumerate(model_results):
+        model_items = model_result[model_result["user"] == user]["item"].tolist() # 현재 모델 추천 아이템 
+        additional_items = [item for item in model_items if item not in selected_items] # 선택된 아이템 중 교집합과 겹치지 않는 아이템
+        selected_items.extend(additional_items[:num_list[model_idx]])
+    return selected_items[:top_k]
 
 def main(args):
 
@@ -14,7 +34,6 @@ def main(args):
     setting = Setting()
     
     model_list = args.models
-    num_list = list(map(int, args.ensemble_nums))  # 각 모델별 사용 개수 리스트 ex)[5, 3, 2]
     top_k = 10  # 최종 추천 아이템 개수
 
     # 모델별 최신 CSV 파일 경로 정의
@@ -48,12 +67,11 @@ def main(args):
         
         selected_items = [item for item, count in item_counter.items() if count >= 2] # 교집합(2번 이상 등장 아이템)
 
-        for model_idx, model_result in enumerate(model_results):
-            model_items = model_result[model_result["user"] == user]["item"].tolist() # 현재 모델 추천 아이템 
-            additional_items = [item for item in model_items if item not in selected_items] # 선택된 아이템 중 교집합과 겹치지 않는 아이템
-            selected_items.extend(additional_items[:num_list[model_idx]])
-
-        selected_items = selected_items[:top_k] # 10개 초과 시 자르기
+        if args.sort == 'rank':
+            selected_items = ranking_priority_sort(user, model_results, selected_items, top_k)
+        elif args.sort == 'model':
+            num_list = list(map(int, args.ensemble_nums))  # 각 모델별 사용 개수 리스트 ex)[5, 3, 2]
+            selected_items = model_priority_sort(user, model_results, selected_items, num_list, top_k)
 
         for item in selected_items:
             final_recommendations.append((user, item)) # 최종 추천에 추가
@@ -65,7 +83,7 @@ def main(args):
     print('-'*10, f'Save', '-'*10)
     file_path = setting.make_dir(os.path.join(args.submit_dir, "ensemble"))
     models_combined = ",".join(model_list)
-    filename = os.path.join(file_path, f"ensemble({models_combined}).csv")
+    filename = os.path.join(file_path, f"ensemble_{args.sort}({models_combined}).csv")
     result_df.to_csv(filename, index=False)
 
     print('Done!')
@@ -86,8 +104,10 @@ if __name__ == "__main__":
     arg('--seed', '-s', '--s', type=int, default=0,
         help='데이터분할 및 모델 초기화 시 사용할 시드를 설정할 수 있습니다.')
     arg('--ensemble_type', '-et', default='hard')
-    arg('--ensemble_nums', '-ew', nargs="+", required=True, 
-        help='ensemble에 사용할 각 모델별 num list를 반환합니다.(model과 동일한 순서로 설정)')
+    arg('--sort', '-sort', choices=['rrf', 'rank', 'model'], default='rank',
+        help='교집합을 제외한 추천 아이템의 순서를 정렬할 방법을 선택합니다.')
+    arg('--ensemble_nums', '-ew', nargs="+",
+        help='model sort 방식을 이용할 때 ensemble에 사용할 각 모델별 num list를 반환합니다.(model과 동일한 순서로 설정)')
     
 
     args = parser.parse_args()
