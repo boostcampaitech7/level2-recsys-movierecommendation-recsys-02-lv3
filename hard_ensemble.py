@@ -4,21 +4,22 @@ from tqdm import tqdm
 from collections import Counter
 import pandas as pd
 from omegaconf import OmegaConf
-from src.utils.util import Setting
+from src.utils.util import Setting, rearrange_item_with_rrf_score
+
+def rrf_priority_sort(top_items, top_k):
+    selected_items = rearrange_item_with_rrf_score(top_items, top_k)
+    return selected_items
 
 def ranking_priority_sort(user, model_results, selected_items, top_k):
-    for _ in range(10):
+    while True:
         for model_idx, model_result in enumerate(model_results):
             model_items = model_result[model_result["user"] == user]["item"].tolist()
             leftover_items = [item for item in model_items if item not in selected_items]
-            if _ >= len(leftover_items):
-                # 교집합 아이템을 제외한 아이템이 더 없을 경우, 다음 모델의 결과값으로 넘어갑니다.
-                continue
-            selected_items.append(leftover_items[_])
-            
-        if len(selected_items) >= 10:
-            selected_items = selected_items[:top_k]
-            return selected_items
+            if len(leftover_items)>0:
+                selected_items.append(leftover_items.pop(0))
+            if len(selected_items) >= 10:
+                selected_items = selected_items[:top_k]
+                return selected_items
 
 def model_priority_sort(user, model_results, selected_items, num_list, top_k):
     for model_idx, model_result in enumerate(model_results):
@@ -26,6 +27,7 @@ def model_priority_sort(user, model_results, selected_items, num_list, top_k):
         additional_items = [item for item in model_items if item not in selected_items] # 선택된 아이템 중 교집합과 겹치지 않는 아이템
         selected_items.extend(additional_items[:num_list[model_idx]])
     return selected_items[:top_k]
+
 
 def main(args):
 
@@ -64,14 +66,17 @@ def main(args):
     final_recommendations = []
     for user, items in tqdm(user_recommendations.items(), desc="Processing users"):
         item_counter = Counter(items) # 아이템 등장 빈도 계산
-        
-        selected_items = [item for item, count in item_counter.items() if count >= 2] # 교집합(2번 이상 등장 아이템)
 
-        if args.sort == 'rank':
-            selected_items = ranking_priority_sort(user, model_results, selected_items, top_k)
-        elif args.sort == 'model':
-            num_list = list(map(int, args.ensemble_nums))  # 각 모델별 사용 개수 리스트 ex)[5, 3, 2]
-            selected_items = model_priority_sort(user, model_results, selected_items, num_list, top_k)
+        if args.sort == 'rrf':
+            selected_items = rrf_priority_sort(items, top_k)
+        else:
+            selected_items = [item for item, count in item_counter.items() if count >= 2] # 교집합(2번 이상 등장 아이템)
+
+            if args.sort == 'rank':
+                selected_items = ranking_priority_sort(user, model_results, selected_items, top_k)
+            elif args.sort == 'model':
+                num_list = list(map(int, args.ensemble_nums))  # 각 모델별 사용 개수 리스트 ex)[5, 3, 2]
+                selected_items = model_priority_sort(user, model_results, selected_items, num_list, top_k)
 
         for item in selected_items:
             final_recommendations.append((user, item)) # 최종 추천에 추가

@@ -352,7 +352,7 @@ def get_total_probability(logit_list):
     return sorted_probabilities
 
 
-def rearrange_item_with_rrf_score(top_items, topk=10, k=60):
+def rearrange_item_with_rrf_score(top_items, top_k=10, k=60):
     """
     RRF score를 계산하여 RRF score를 기준으로 여러 모델의 결과 순위를 재정렬하여 반환
 
@@ -376,4 +376,4 @@ def rearrange_item_with_rrf_score(top_items, topk=10, k=60):
     items = sorted(rrf_score.items(), key=lambda x: x[1], reverse=True)
     items = [item for item, score in items]
 
-    return items[:topk]
+    return items[:top_k]
