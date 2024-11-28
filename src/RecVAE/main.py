@@ -1,24 +1,21 @@
 import argparse
 import ast
-from omegaconf import OmegaConf
-import pandas as pd
 import os
 import sys
-import glob
-
+from omegaconf import OmegaConf
+import pandas as pd
 import torch
 import torch.optim as optimizer_module
-import torch.optim.lr_scheduler as scheduler_module
-from torch.utils.data import DataLoader
-
-from inference import inference
-from train import train
-from metrics import recall_at_k
+import RecVAE as model_module
+from inference import recvae_predict
+from dataloader import RecVAEDataset
+from train import train, test
 
 current_dir = os.path.dirname(os.path.abspath(__file__)) 
 parent_dir = os.path.dirname(current_dir)
 sys.path.append(parent_dir)
-from utils.util import Logger, Setting, transform_df_to_dict, get_total_probability
+from utils.util import Logger, Setting
+
 
 def main(args):
 
@@ -39,69 +36,48 @@ def main(args):
 
     data = setting.model_modular(args, 'dataset', 'data_load')(args)
 
-    data_loader = setting.model_modular(args, 'dataloader')
-
-    train_dataset = data_loader(data['train_df'], data['num_user'], data['num_item'], args.model_args.BERT4Rec_with_side_info.hidden_units, 
-                                args.model_args.BERT4Rec_with_side_info.max_len, args.train.mask_prob, data['item_genre_dic'])
-    train_dataloader = DataLoader(
-        train_dataset, shuffle=True, batch_size=args.train.batch_size, pin_memory=True
-    )
-
-    valid_dataset = data_loader(data['valid_df'], data['num_user'], data['num_item'], args.model_args.BERT4Rec_with_side_info.hidden_units, 
-                                args.model_args.BERT4Rec_with_side_info.max_len, args.train.mask_prob, data['item_genre_dic'])
-    valid_dataloader = DataLoader(
-        valid_dataset, shuffle=False, batch_size=args.train.batch_size, pin_memory=True
-    )
-
+    train_dataset = RecVAEDataset(args=args, data=data, datatype='train').data
+    valid_dataset = RecVAEDataset(args=args, data=data, datatype='validation')
+    test_dataset = RecVAEDataset(args=args, data=data, datatype='test')
     
     ##### model load
     print("-"*15 + f"init {args.model}" + "-"*15)
-    model = setting.model_modular(args, 'model', 'BERT4Rec')(data['num_user'], data['num_item'], data['num_genres'],
-                                              args.model_args.BERT4Rec_with_side_info.hidden_units, args.model_args.BERT4Rec_with_side_info.num_heads, args.model_args.BERT4Rec_with_side_info.num_layers, 
-                                              args.model_args.BERT4Rec_with_side_info.max_len, args.model_args.BERT4Rec_with_side_info.dropout_rate, args.device)
+    model = getattr(model_module, args.model)(args.model_args[args.model]['hidden_dim'], args.model_args[args.model]['latent_dim'], args.model_args[args.model]['input_dim']).to(args.device)
 
-    model = model.to(args.device)
-    
-    if os.path.exists(args.train.ckpt_dir):
-        print("Load model from pretrained folder")
-        model_path = os.path.join(args.train.ckpt_dir, 'best.pt')
-        model_state_dict = torch.load(model_path, map_location=args.device)
-        model.load_state_dict(model_state_dict)
-
-    else:
+    if args.predict == False:
         ##### running model(train & evaluate & save model)
         print("-"*15 + f"{args.model} TRAINING" + "-"*15)
-        model = train(args, model, train_dataloader, valid_dataloader, logger)
+        model = train(args, model, train_dataset, valid_dataset, logger, setting)
 
     ##### inference
-    print("-"*15 + f"{args.model} INFERENCE" + "-"*15)
-    predict_df, _ = inference(model, data['num_user'], data['num_item'], data['train_df'], data['user2idx'], data['item2idx'], args.model_args.BERT4Rec_with_side_info.max_len, data['item_genre_dic'])
+    print("-"*15 + f"{args.model} PREDICT" + "-"*15)
+    model = test(args, model, test_dataset, setting)
 
-    transform_predict_df = predict_df.copy()
-    transform_predict_df['user_idx'] = transform_predict_df['user'].apply(lambda x: data['user2idx'][x])
-    transform_predict_df['item_idx'] = transform_predict_df['item'].apply(lambda x: data['item2idx'][x])
 
-    transform_predict_df = transform_df_to_dict(transform_predict_df)
-    test_data = transform_df_to_dict(data['test_data'])
-    
-    ##### evaluate
-    recall_at_k(data['num_user'], transform_predict_df, test_data)
-
-    ##### predict with total data
+    ##### save predict
     print("-"*15 + f"SAVE {args.model} PREDICT" + "-"*15)
-    final_predict, logit_list = inference(model, data['num_user'], data['num_item'], data['total_df'], data['user2idx'], data['item2idx'], args.model_args.BERT4Rec_with_side_info.max_len, data['item_genre_dic'])
     
-    # save the submit & ensemble file
-    sorted_probabilities = get_total_probability(logit_list)
-
-    setting.save_file(args, sorted_probabilities, file_extension=".npy", type = None)
-    setting.save_file(args, sorted_probabilities, '.pkl', 'user')
-    setting.save_file(args, sorted_probabilities, '.pkl', 'item')
+    total_dataset = RecVAEDataset(args=args, data=data, datatype='total').data
+    
+    # predict: ensemble 시 전체 아이템에 대한 확률값 필요시 사용
+    predict, top_items = recvae_predict(args, model, total_dataset)
+    
+    # output & index 정보 저장
+    setting.save_file(args, predict)
+    setting.save_file(args, data['id2user'], '.pkl', 'user')
+    setting.save_file(args, data['id2item'], '.pkl', 'item')
+    
+    result = pd.DataFrame(top_items, columns=['user', 'item'])
+    result['user'] = result['user'].apply(lambda x : data['id2user'][x])
+    result['item'] = result['item'].apply(lambda x : data['id2item'][x])
+    result = result.sort_values(by='user')
 
     filename = setting.get_submit_filename(args)
-    final_predict.to_csv(filename, index=False)
+    result.to_csv(filename, index=False)
 
     print('Done!')
+
+
 
 
 
@@ -115,13 +91,13 @@ if __name__ == "__main__":
     arg = parser.add_argument
     str2dict = lambda x: {k:int(v) for k,v in (i.split(':') for i in x.split(','))}
     
-
+    
     arg('--config', '-c', '--c', type=str, 
-        help='Configuration 파일을 설정합니다.', default = '/data/ephemeral/home/level2-recsys-movierecommendation-recsys-02-lv3/src/BERT4Rec_with_side_info/config.yaml')
+        help='Configuration 파일을 설정합니다.', default='/data/ephemeral/home/src/RecVAE/config.yaml')
     arg('--predict', '-p', '--p', '--pred', type=ast.literal_eval, 
         help='학습을 생략할지 여부를 설정할 수 있습니다.')
     arg('--model', '-m', '--m', type=str, 
-        choices=['MultiVAE'],
+        default='RecVAE',
         help='학습 및 예측할 모델을 선택할 수 있습니다.')
     arg('--seed', '-s', '--s', type=int,
         help='데이터분할 및 모델 초기화 시 사용할 시드를 설정할 수 있습니다.')
@@ -130,7 +106,7 @@ if __name__ == "__main__":
     arg('--device', '-d', '--d', type=str, 
         choices=['cuda', 'cpu', 'mps'], help='사용할 디바이스를 선택할 수 있습니다.')
     arg('--wandb', '--w', '-w', type=ast.literal_eval, 
-        help='wandb를 사용할지 여부를 설정할 수 있습니다.')
+        help='wandb를 사용할지 여부를 설정할 수 있습니다.', default= False)
     arg('--wandb_project', '--wp', '-wp', type=str,
         help='wandb 프로젝트 이름을 설정할 수 있습니다.')
     arg('--run_name', '--rn', '-rn', '--r', '-r', type=str,
@@ -141,6 +117,11 @@ if __name__ == "__main__":
     arg('--other_params', '--op', '-op', type=ast.literal_eval)
     arg('--optimizer', '-opt', '--opt', type=ast.literal_eval)
     arg('--lr_scheduler', '-lr', '--lr', type=ast.literal_eval)
+    arg('--step', type=int, default=10)
+    arg('--gamma', type=float, default=0.004)
+    arg('--lambd', type=float, default=500)
+    arg('--alpha', type=float, default=1)
+    arg('--threshold', type=int, default=1000)
     arg('--train', '-t', '--t', type=ast.literal_eval)
     
     args = parser.parse_args()
@@ -165,13 +146,7 @@ if __name__ == "__main__":
         
         config_yaml.optimizer.args = {k: v for k, v in config_yaml.optimizer.args.items() 
                                     if k in getattr(optimizer_module, config_yaml.optimizer.type).__init__.__code__.co_varnames}
-        
-        if config_yaml.lr_scheduler.use == False:
-            del config_yaml.lr_scheduler.type, config_yaml.lr_scheduler.args
-        else:
-            config_yaml.lr_scheduler.args = {k: v for k, v in config_yaml.lr_scheduler.args.items() 
-                                            if k in getattr(scheduler_module, config_yaml.lr_scheduler.type).__init__.__code__.co_varnames}
-        
+
         if config_yaml.train.resume == False:
             del config_yaml.train.resume_path
 
@@ -190,7 +165,7 @@ if __name__ == "__main__":
                    resume="allow")
         config_yaml.run_href = wandb.run.get_url()
 
-        wandb.run.log_code("./src")  # src 내의 모든 파일을 업로드. Artifacts에서 확인 가능
+        wandb.run.log_code("./src/RecVAE")
     
     
     main(config_yaml)

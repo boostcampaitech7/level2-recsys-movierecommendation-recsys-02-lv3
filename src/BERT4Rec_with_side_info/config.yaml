@@ -18,7 +18,6 @@ model: BERT4Rec_with_side_info       # 모델 선택
 run_name: 'jay : BERT4Rec_with_side_info'
 wandb: True                               # wandb 사용 여부
 wandb_project: 'lv2.movie_recommendation'  # wandb 프로젝트 이름
-predict_dir: '../../saved/ensemble'
 
 model_args:     # model에 해당하는 파라미터만 실질적으로 사용됩니다.
     MultiVAE:
@@ -35,13 +34,13 @@ model_args:     # model에 해당하는 파라미터만 실질적으로 사용�
 # .. -> src
 # model_folder = os.path.join(args.dataloader.data_path, model_name)
 dataset:
-    data_path: ../../data/train/    # 데이터셋 경로
-    save_path: ../../data/BERT4Rec_with_side_info/
+    data_path: data/train/    # 데이터셋 경로
+    save_path: data/BERT4Rec_with_side_info/
     ratio: 0.1                  # Train / Vaildation / Test split
     test_prop : 0.2
 
 dataloader:
-    data_path: ../          # 데이터 load 경로(개인 폴더 경로로 설정해야함)
+    data_path: src/          # 데이터 load 경로(개인 폴더 경로로 설정해야함)
     batch_size: 250         # 배치 사이즈
     shuffle: True           # 학습 데이터 셔플 여부
     num_workers: 0          # 멀티프로세서 수. 0: 메인프로세서만 사용
@@ -75,13 +74,16 @@ lr_scheduler:
 # .. -> src
 
 train:
-    epochs: 100                          # 학습 에폭 수
+    epochs: 3                          # 학습 에폭 수
     lr: 0.001
     batch_size: 128
     mask_prob: 0.15 # for cloze task 
-    log_dir: ../../saved/log                  # 로그 저장 경로
-    ckpt_dir: ../../saved/checkpoint          # 모델 저장 경로
-    submit_dir: ../../saved/submit            # 예측 저장 경로
+    log_dir: saved/BERT4Rec_with_side_info/log                  # 로그 저장 경로
+    ckpt_dir: saved/BERT4Rec_with_side_info/checkpoint          # 모델 저장 경로
+    submit_dir: saved/BERT4Rec_with_side_info/submit            # 예측 저장 경로
     save_best_model: True               # True: val_loss가 최소인 모델 저장 / False: 모든 모델 저장
     resume: False                               # 이어서 학습할 경우 True
-    resume_path: saved/checkpoint/MultiVAE.pt    # 이어서 학습할 모델 경로
+    resume_path: saved/checkpoint/BERT4Rec_with_side_info.pt    # 이어서 학습할 모델 경로
+    predict_dir: saved/BERT4Rec_with_side_info/predict
+
+    

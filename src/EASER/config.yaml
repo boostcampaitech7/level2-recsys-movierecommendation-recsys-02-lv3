@@ -25,7 +25,7 @@ model_args:     # EASER 모델에 해당하는 파라미터
         epochs: 100
 
 dataset:
-    data_path: data/train/                      # 데이터셋 경로
+    data_path: ./data/train/                      # 데이터셋 경로
     ratio: 0.1                                  # Train / Validation / Test split
     valid_samples: 10                           # Validation 데이터 수
 
@@ -34,19 +34,12 @@ dataloader:
     shuffle: True                                # 학습 데이터 셔플 여부
     num_workers: 0                               # 멀티프로세서 수
 
-optimizer:
-    type: None                                   # EASER는 explicit optimizer 필요 없음
-    args: {}
 
-lr_scheduler:
-    use: False                                   # EASER는 lr_scheduler 필요 없음
-    type: None
-    args: {}
 
 train:
-    log_dir: saved/EASER/log                     # 로그 저장 경로
-    ckpt_dir: saved/EASER/checkpoint             # 모델 저장 경로
-    submit_dir: saved/EASER/submit               # 예측 저장 경로
+    ckpt_dir: saved/EASER/checkpoint/             # 모델 저장 경로
+    submit_dir: saved/EASER/submit/               # 예측 저장 경로
+    predict_dir: saved/EASER/predict/          # matrix 저장 경로
     save_best_model: True                        # True: val_loss가 최소인 모델 저장
     resume: False                                # 이어서 학습할 경우 True
     resume_path: saved/EASER/checkpoint/EASER.pth  # 이어서 학습할 모델 경로
