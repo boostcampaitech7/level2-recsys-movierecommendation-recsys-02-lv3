@@ -297,7 +297,7 @@ class Logger:
 
 ####################
 # ensemble 전용 function
-def optimize_replace_inf(multi_output, alpha=0.1):
+def optimize_replace_inf(multi_output):
     for i in range(multi_output.size(0)):
         mask = multi_output[i] != float("-inf")
         min_value = torch.min(multi_output[i][mask])
