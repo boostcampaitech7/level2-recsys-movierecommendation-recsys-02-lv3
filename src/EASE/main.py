@@ -1,24 +1,11 @@
-import yaml
 import argparse
 import ast
 import os
 import sys
 from omegaconf import OmegaConf
-from datetime import datetime
-from pytz import timezone
-import sys
-from sklearn.preprocessing import LabelEncoder
-from scipy.sparse import csr_matrix
-
-from dataloader import *
-from dataset import MakeMatrixDataSet
-import EASER as model_module
-
-import warnings
-warnings.filterwarnings(action="ignore")
-
-# utils_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'utils')
-# sys.path.append(utils_path)
+import pandas as pd
+import EASE as model_module
+from inference import ease_predict
 
 current_dir = os.path.dirname(os.path.abspath(__file__)) 
 parent_dir = os.path.dirname(current_dir)
@@ -27,7 +14,10 @@ sys.path.append(parent_dir)
 from utils.util import Setting
 
 
+
 def main(args):
+
+    
     ##### Setting
     Setting.seed_everything(args.seed)
     setting = Setting()
@@ -35,31 +25,43 @@ def main(args):
     
     ##### data load    
     print("-"*15 + f"{args.model} Load Data" + "-"*15)
-    data_loader = Dataloader(args)
-    train_df, users, items = data_loader.dataloader()
+
+    data = setting.model_modular(args, 'dataset', 'data_load')(args)
+    data_loader = setting.model_modular(args, 'dataloader')
+    total_dataset = data_loader(args, data, datatype='total').data.toarray()
     
+    ##### model load
     print("-"*15 + f"init {args.model}" + "-"*15)
-    model = getattr(model_module, args.model)(args)
-   
-   
+    model = getattr(model_module, args.model)(args.model_args[args.model]['lambda'])
+
+    ##### running model(train & evaluate & save model)
+    print("-"*15 + f"{args.model} TRAINING" + "-"*15)
+    model.train(total_dataset)
+
+    ##### save predict
     print("-"*15 + f"SAVE {args.model} PREDICT" + "-"*15)    
-    predict = model.fit(train_df)
+    predict, top_items = ease_predict(args, model, total_dataset, 10)
+    
+    
+    # output & index 정보 저장
     setting.save_file(args, predict)
-    
-    # 결과 저장 (유저별 Top-K 추천)
-    result_df, user_index_to_id, item_index_to_id = model.predict(train_df, users, items, args.train.K)
-    setting.save_file(args, user_index_to_id, '.pkl', 'user')
-    setting.save_file(args, item_index_to_id, '.pkl', 'item')
-    
-    result_df = result_df[['user','item']].sort_values(by='user')
+    setting.save_file(args, data['id2user'], '.pkl', 'user')
+    setting.save_file(args, data['id2item'], '.pkl', 'item')
+
+    result = pd.DataFrame(top_items, columns=['user', 'item'])
+    result['user'] = result['user'].apply(lambda x : data['id2user'][x])
+    result['item'] = result['item'].apply(lambda x : data['id2item'][x])
+    result = result.sort_values(by='user')
 
     filename = setting.get_submit_filename(args)
-    result_df.to_csv(filename, index=False)
+    result.to_csv(filename, index=False)
 
     print('Done!')
 
 
-   
+
+
+
 if __name__ == "__main__":
 
 
@@ -72,9 +74,9 @@ if __name__ == "__main__":
     
     
     arg('--config', '-c', '--c', type=str, 
-        help='Configuration 파일을 설정합니다.', default='./choi/level2-recsys-movierecommendation-recsys-02-lv3/src/EASER/config.yaml')
+        help='Configuration 파일을 설정합니다.', default='./choi/level2-recsys-movierecommendation-recsys-02-lv3/src/EASE/config.yaml')
     arg('--model', '-m', '--m', type=str, 
-        default='EASER',
+        default='EASE',
         help='학습 및 예측할 모델을 선택할 수 있습니다.')
     arg('--seed', '-s', '--s', type=int,
         help='데이터분할 및 모델 초기화 시 사용할 시드를 설정할 수 있습니다.')
@@ -99,8 +101,10 @@ if __name__ == "__main__":
             config_yaml[key] = config_args[key]
     
         
-    # config_yaml.model_args = OmegaConf.create({config_yaml.model : config_yaml.model_args[config_yaml.model]})
+    config_yaml.model_args = OmegaConf.create({config_yaml.model : config_yaml.model_args[config_yaml.model]})
+
 
     print(OmegaConf.to_yaml(config_yaml))
 
+    
     main(config_yaml)
