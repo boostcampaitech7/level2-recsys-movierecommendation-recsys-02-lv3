@@ -11,6 +11,7 @@ import importlib
 from collections import defaultdict
 import torch.nn.functional as F
 
+
 class Setting:
     @staticmethod
     def seed_everything(seed):
@@ -166,9 +167,9 @@ class Setting:
         model : 찾고자 하는 파일의 모델을 전달받습니다.
         file_extension (str): 찾고자 하는 파일의 확장자입니다. (default: ".npy")
         """
-        if args.ensemble_type == 'soft':
+        if args.ensemble_type == "soft":
             directory = os.path.join(directory, model + "/predict/")
-            
+
         files = [f for f in os.listdir(directory) if f.endswith(file_extension)]
 
         if not files:
@@ -347,5 +348,32 @@ def get_total_probability(logit_list):
 
     # 확률값 내림차순으로 정렬
     sorted_probabilities, sorted_indices = torch.sort(probabilities, descending=True)
-    
+
     return sorted_probabilities
+
+
+def rearrange_item_with_rrf_score(top_items, topk=10, k=60):
+    """
+    RRF score를 계산하여 RRF score를 기준으로 여러 모델의 결과 순위를 재정렬하여 반환
+
+    parameters
+    ----------
+    top_items : 모델별 추천 아이템 topk개를 순서대로 병합한 리스트
+    ex) model A : [1, 2, 3], model B : [4, 5, 6] -> top_items : [1, 2, 3, 4, 5, 6]
+
+    returns
+    -------
+    재정렬된 추천 아이템 topk개
+    """
+    rrf_score = dict()
+    for i in range(len(top_items)):
+        rank = (i % 10) + 1
+        if top_items[i] in rrf_score:
+            rrf_score[top_items[i]] += 1 / (k + rank)
+        else:
+            rrf_score[top_items[i]] = 1 / (k + rank)
+
+    items = sorted(rrf_score.items(), key=lambda x: x[1], reverse=True)
+    items = [item for item, score in items]
+
+    return items[:topk]
