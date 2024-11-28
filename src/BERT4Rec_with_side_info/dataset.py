@@ -18,6 +18,8 @@ def _merge_data(args):
     # user, item indexing
     item2idx = pd.Series(data=np.arange(len(item_ids))+1, index=item_ids) # item re-indexing (1~num_item), num_item+1: mask idx
     user2idx = pd.Series(data=np.arange(len(user_ids)), index=user_ids) # user re-indexing (0~num_user-1)
+    idx2item = {idx: item for (idx, item) in enumerate(item_ids)}
+    idx2user = {idx: user for (idx, user) in enumerate(user_ids)}
 
     genre_names = genre_data.genre.unique()
     genre2idx = {genre : idx + 1 for idx, genre in enumerate(genre_names)}
@@ -31,7 +33,7 @@ def _merge_data(args):
 
     num_genres = len(set(merged_data.genre_idx))
     
-    return merged_data, item_ids, user_ids, num_item, num_user, num_genres, item2idx, user2idx, genre2idx
+    return merged_data, item_ids, user_ids, num_item, num_user, num_genres, item2idx, user2idx, genre2idx, idx2item, idx2user
 
 def _split_train_test(args, merged_data):
     save_path = args.dataset.save_path
@@ -121,7 +123,7 @@ def data_load(args):
         학습 데이터와 user, item 정보가 담긴 사전 형식의 데이터를 반환합니다.
     """
 
-    merged_data, item_ids, user_ids, num_item, num_user, num_genres, item2idx, user2idx, genre2idx = _merge_data(args)
+    merged_data, item_ids, user_ids, num_item, num_user, num_genres, item2idx, user2idx, genre2idx, idx2item, idx2user = _merge_data(args)
 
     train_data, test_data = _split_train_test(args, merged_data)
 
@@ -140,6 +142,8 @@ def data_load(args):
         'num_genres': num_genres,
         'item2idx': item2idx,
         'user2idx': user2idx,
+        'idx2item': idx2item,
+        'idx2user': idx2user,
         'genre2idx': genre2idx,
         'train_data': train_data,
         'test_data': test_data,
