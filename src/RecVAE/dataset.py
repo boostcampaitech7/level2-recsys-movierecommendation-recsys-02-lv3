@@ -115,7 +115,7 @@ def _split_data(raw_data, tr_users, vd_users, te_users, unique_uid):
         'total_data' : _numerize(raw_data.copy(), user2idx, item2idx),
         'unique_sid': unique_sid,
         'id2item' : id2item,
-        'idx2user' : idx2user
+        'id2user' : idx2user
     }
     
     return data

@@ -89,6 +89,7 @@ if __name__ == "__main__":
         help='데이터분할 및 모델 초기화 시 사용할 시드를 설정할 수 있습니다.')
     arg('--scaling_method', '-sm', type=str, choices=['min_max', 'softmax', 'average'], required=True, 
         help='scaling에 사용할 방법 선택합니다. (min_max, softmax, average 등)')
+    arg('--ensemble_type', '-et', default='soft')
     arg('--ensemble_weights', '-ew', nargs="+", required=True, 
         help='ensemble에 사용할 각 모델별 weight list를 반환합니다.(model과 동일한 순서로 설정)')
     

@@ -19,9 +19,10 @@ def main(args):
 
     # 모델별 최신 CSV 파일 경로 정의
     model_csv_paths = [
-        setting.get_latest_file(args.predict_dir, model, file_extension=".csv") for model in model_list
+        setting.get_latest_file(args, args.submit_dir, model, file_extension=".csv") for model in model_list
     ]
 
+    print(model_csv_paths)
     # None 값 제거
     model_csv_paths = [path for path in model_csv_paths if path is not None]
     if not model_csv_paths:
@@ -62,7 +63,7 @@ def main(args):
 
 
     print('-'*10, f'Save', '-'*10)
-    file_path = setting.make_dir(args.submit_dir)
+    file_path = setting.make_dir(os.path.join(args.submit_dir, "ensemble"))
     models_combined = ",".join(model_list)
     filename = os.path.join(file_path, f"ensemble({models_combined}).csv")
     result_df.to_csv(filename, index=False)
@@ -84,6 +85,7 @@ if __name__ == "__main__":
         help='앙상블에 사용할 모델 list를 설정합니다.') 
     arg('--seed', '-s', '--s', type=int, default=0,
         help='데이터분할 및 모델 초기화 시 사용할 시드를 설정할 수 있습니다.')
+    arg('--ensemble_type', '-et', default='hard')
     arg('--ensemble_nums', '-ew', nargs="+", required=True, 
         help='ensemble에 사용할 각 모델별 num list를 반환합니다.(model과 동일한 순서로 설정)')
     

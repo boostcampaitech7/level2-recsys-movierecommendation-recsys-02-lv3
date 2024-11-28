@@ -156,7 +156,7 @@ class Setting:
             with open(filename, "wb") as file:
                 pickle.dump(data, file)
 
-    def get_latest_file(self, directory, model, file_extension=".npy"):
+    def get_latest_file(self, args, directory, model, file_extension=".npy"):
         """
         [description]
         주어진 디렉토리에서 가장 최근 파일을 찾는 함수입니다.
@@ -166,8 +166,10 @@ class Setting:
         model : 찾고자 하는 파일의 모델을 전달받습니다.
         file_extension (str): 찾고자 하는 파일의 확장자입니다. (default: ".npy")
         """
-        file_path = os.path.join(directory, model + "/predict/")
-        files = [f for f in os.listdir(file_path) if f.endswith(file_extension)]
+        if args.ensemble_type == 'soft':
+            directory = os.path.join(directory, model + "/predict/")
+            
+        files = [f for f in os.listdir(directory) if f.endswith(file_extension)]
 
         if not files:
             print("해당 디렉토리에 파일이 없습니다.")
@@ -210,10 +212,13 @@ class Setting:
             return latest_user_dict, latest_item_dict
 
         elif file_extension == ".csv":
-            # .csv 파일 처리: 가장 최신 파일 경로 반환
-            latest_file = max(files, key=lambda x: x.split("_")[0] + x.split("_")[1])
-            latest_file_path = os.path.join(file_path, latest_file)
-            return latest_file_path
+            # .csv 파일 처리: 각 모델 별 submit csv
+            file_path = os.path.join(directory, model) + file_extension
+
+            # latest_file = max(files, key=lambda x: x.split("_")[0] + x.split("_")[1])
+            # latest_file_path = os.path.join(file_path, latest_file)
+            # return latest_file_path
+            return file_path
 
         else:
             # .npy 파일에 대한 처리

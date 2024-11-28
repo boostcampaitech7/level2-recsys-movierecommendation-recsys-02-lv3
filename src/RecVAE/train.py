@@ -104,6 +104,11 @@ def train(args, model, train_dataset, valid_dataset, logger, setting):
             torch.save(model.state_dict(), f'{args.train.ckpt_dir}/{setting.save_time}_{args.model}_best.pt')
             print(f"\n🧹 checkpoint updated at epoch {epoch}, recall {best_r10}")
         
+        if args.wandb:
+            import wandb
+            wandb.log({'Epoch': epoch,
+                       'Recall@10': valid_scores[-1]})
+            
         print((f'epoch {epoch} | elapsed time {elapsed_time} | valid recall@10: {valid_scores[-1]:.4f} |' +
                f'best recall@10: {best_r10} | train recall@20: {train_scores[-1]:.4f}'))
 
