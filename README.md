@@ -1,7 +1,9 @@
 <div align='center'>
 <p align='center'>
-    <img src="https://capsule-render.vercel.app/api?type=waving&color=auto&height=250&section=header&text=Rec%20N%20Roll&fontSize=80&animation=fadeIn&fontAlignY=38&desc=Lv3%20Project&descAlignY=51&descAlign=80"/>
+    <img src="https://capsule-render.vercel.app/api?type=waving&color=auto&height=250&section=header&text=It's%20me,%20RecSys%20🤓&fontSize=60&animation=fadeIn&fontAlignY=38&desc=Lv2%20Project&descAlignY=51&descAlign=80"/>
 </p>
+    <img src="https://github.com/user-attachments/assets/d3ac8d42-2738-4ddb-8b09-fa346494bcd6" width=500/>
+
 </div>
 
 # 🍿 LV.3 RecSys 프로젝트 : Movie Recommendation
