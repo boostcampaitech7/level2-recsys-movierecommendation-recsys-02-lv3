@@ -1,19 +1,19 @@
 <div align='center'>
 <p align='center'>
-    <img src="https://capsule-render.vercel.app/api?type=waving&color=auto&height=250&section=header&text=It's%20me,%20RecSys%20🤓&fontSize=60&animation=fadeIn&fontAlignY=38&desc=Lv2%20Project&descAlignY=51&descAlign=80"/>
+    <img src="https://capsule-render.vercel.app/api?type=waving&color=auto&height=250&section=header&text=It's%20me,%20RecSys%20🤓&fontSize=60&animation=fadeIn&fontAlignY=38&desc=Lv2%20Project&descAlignY=51&descAlign=90"/>
 </p>
     <img src="https://github.com/user-attachments/assets/d3ac8d42-2738-4ddb-8b09-fa346494bcd6" width=500/>
 
 </div>
 
-# 🍿 LV.3 RecSys 프로젝트 : Movie Recommendation
+# 🍿 LV.2 RecSys 프로젝트 : Movie Recommendation
 
 
 
 ## 🏆 대회 소개
 | 특징 | 설명 |
 |:---:|---|
-| 대회 주제 | 네이버 부스트캠프 AI-Tech 7기 RecSys level3 - Movie Recommendation|
+| 대회 주제 | 네이버 부스트캠프 AI-Tech 7기 RecSys level2 - Movie Recommendation|
 | 데이터 구성 | `train_ratings.tsv, genres.tsv, titles.tsv` 총 3개의 CSV 파일 |
 | 평가 지표 | Recall@10로 전체 선호 아이템 중 추천된 아이템이 얼마나 존재하는지를 측정한다. |
 
@@ -159,8 +159,11 @@
 ```bash
 # Single Model
 # [BERT4Rec, BERT4Rec_with_side_info, DeepFM, EASE, EASER, MF, MultiVAE, RecBole, RecVAE]
-$ python main.py -m [모델명] -c configs/config.yaml
+$ python main.py -m [모델명]
 
 # Ensemble
-$ python main.py -m MultiVAE EASE -sm min_max -ew 1 3
+$ #hard_voting
+$ python hard_ensemble.py -m [모델명]*k(앙상블 모델 개수) --sort [아이템 정렬 방법:=rrf,rank,model] -ew n(앙상블 모델 개수 k만큼 각 모델의 가중치 입력) 
+$ #soft_voting
+$ python ensemble.py -m [모델명]*k(앙상블 모델 개수) -sm min_max -ew n(앙상블 모델 개수 k만큼 각 모델의 가중치 입력)
 ```
