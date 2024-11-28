@@ -209,6 +209,12 @@ class Setting:
 
             return latest_user_dict, latest_item_dict
 
+        elif file_extension == ".csv":
+            # .csv 파일 처리: 가장 최신 파일 경로 반환
+            latest_file = max(files, key=lambda x: x.split("_")[0] + x.split("_")[1])
+            latest_file_path = os.path.join(file_path, latest_file)
+            return latest_file_path
+
         else:
             # .npy 파일에 대한 처리
             latest_file = max(files, key=lambda x: x.split("_")[0] + x.split("_")[1])
@@ -319,19 +325,19 @@ def row_min_max_normalization(tensor):
 def transform_df_to_dict(data):
     data_dic = defaultdict(list)
     data_df = {}
-    for u, i in tqdm(zip(data['user_idx'], data['item_idx'])):
+    for u, i in tqdm(zip(data["user_idx"], data["item_idx"])):
         data_dic[u].append(i)
 
     for user in data_dic:
         data_df[user] = data_dic[user]
-    
+
     return data_df
 
 
 def get_total_probability(logit_list):
     proba = np.stack(logit_list)
     proba = torch.tensor(proba)
-    proba[proba == float('inf')] = float('-inf')
+    proba[proba == float("inf")] = float("-inf")
     probabilities = F.softmax(proba, dim=1)
 
     # 확률값 내림차순으로 정렬

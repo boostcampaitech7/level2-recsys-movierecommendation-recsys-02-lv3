@@ -18,6 +18,7 @@ def main(args):
     
     model_list = args.models
     weight_list = args.ensemble_weights
+    print(model_list, weight_list)
     
     ensemble_predict = np.zeros((31360, 6807))
     weighted_sum = 0
@@ -32,10 +33,6 @@ def main(args):
         user_dict = dict(sorted(user_matrix.items(), key=lambda item: item[1]))
         item_dict = dict(sorted(item_matrix.items(), key=lambda item: item[1]))
 
-        if model == 'EASE':
-            k = 0.1
-        elif model == 'MultiVAE':
-            k = 1
             
         print('-'*10, f'{model} Preprocessing', '-'*10)
         replace_predict = optimize_replace_inf(torch.tensor(arrays, dtype=torch.float64), k)    # -inf 값 처리
@@ -82,7 +79,7 @@ if __name__ == "__main__":
     str2dict = lambda x: {k:int(v) for k,v in (i.split(':') for i in x.split(','))}
     
     arg('--config', '-c', '--c', type=str, 
-        help='Configuration 파일을 설정합니다.', default='choi/level2-recsys-movierecommendation-recsys-02-lv3/configs/config.yaml')    
+        help='Configuration 파일을 설정합니다.', default='/data/ephemeral/home/level2-recsys-movierecommendation-recsys-02-lv3/configs/config.yaml')    
     arg('--models', '-m', '--m', nargs="+", required=True,
         help='앙상블에 사용할 모델 list를 설정합니다.')
     arg('--seed', '-s', '--s', type=int, default=0,
@@ -105,6 +102,9 @@ if __name__ == "__main__":
             config_yaml[key] = config_args[key]
 
     print(OmegaConf.to_yaml(config_yaml))
+    print(config_args)
+    print(config_yaml)
+    print(args)
 
     main(config_yaml)
 

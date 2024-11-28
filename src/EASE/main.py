@@ -84,12 +84,6 @@ if __name__ == "__main__":
         help='학습을 생략할 때 사용할 모델을 설정할 수 있습니다. 단, 하이퍼파라미터 세팅을 모두 정확하게 입력해야 합니다.')
     arg('--device', '-d', '--d', type=str, 
         choices=['cuda', 'cpu', 'mps'], help='사용할 디바이스를 선택할 수 있습니다.')
-    arg('--wandb', '--w', '-w', type=ast.literal_eval, 
-        help='wandb를 사용할지 여부를 설정할 수 있습니다.', default=False)
-    arg('--wandb_project', '--wp', '-wp', type=str,
-        help='wandb 프로젝트 이름을 설정할 수 있습니다.')
-    arg('--run_name', '--rn', '-rn', '--r', '-r', type=str,
-        help='wandb에서 사용할 run 이름을 설정할 수 있습니다.')
     arg('--model_args', '--ma', '-ma', type=ast.literal_eval)
     arg('--dataloader', '--dl', '-dl', type=ast.literal_eval)
     arg('--dataset', '--dset', '-dset', type=ast.literal_eval)
@@ -106,30 +100,11 @@ if __name__ == "__main__":
         if config_args[key] is not None:
             config_yaml[key] = config_args[key]
     
-    if config_yaml.wandb == False:
-        del config_yaml.wandb_project, config_yaml.run_name
         
     config_yaml.model_args = OmegaConf.create({config_yaml.model : config_yaml.model_args[config_yaml.model]})
 
 
     print(OmegaConf.to_yaml(config_yaml))
-    
-    
-    ######################## W&B
-    if config_yaml.wandb:
-        import wandb
-        wandb.init(project=config_yaml.wandb_project, 
-                   config=OmegaConf.to_container(config_yaml, resolve=True),
-                   name=config_yaml.run_name if config_yaml.run_name else None,
-                   notes=config_yaml.memo if hasattr(config_yaml, 'memo') else None,
-                   tags=[config_yaml.model],
-                   resume="allow",
-                   group=f"Sweep_{config_yaml.model}")
-        config_yaml.run_href = wandb.run.get_url()
 
-        wandb.run.log_code("./src/EASE")
     
     main(config_yaml)
-    
-    if config_yaml.wandb:
-        wandb.finish()

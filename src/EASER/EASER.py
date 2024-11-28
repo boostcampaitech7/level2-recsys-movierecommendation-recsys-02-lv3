@@ -63,7 +63,7 @@ class EASER:
         DD = np.zeros( (ZtZ.shape[0], XtX.shape[0]),dtype=np.float64 )
         UU = np.zeros( (ZtZ.shape[0], XtX.shape[0]),dtype=np.float64 )
 
-        for iter in tqdm(range(self.epochs)):
+        for _ in tqdm(range(self.epochs)):
             # learn BB
             XtX[ii_diag] = XtXdiag
             BB= PP.dot(XtX-ZtX.T.dot(CC))
@@ -145,7 +145,11 @@ class EASER:
             user_preds = pd.concat([user_preds,r])
 
         user_preds['item'] = self.item_enc.inverse_transform(user_preds['item'])
-        
 
-        return user_preds 
+      
+        # Generate dictionaries for user and item mappings
+        user_index_to_id = {index: user_id for index, user_id in enumerate(self.user_enc.classes_)}
+        item_index_to_id = {index: item_id for index, item_id in enumerate(self.item_enc.classes_)}  
+
+        return user_preds, user_index_to_id, item_index_to_id
         
