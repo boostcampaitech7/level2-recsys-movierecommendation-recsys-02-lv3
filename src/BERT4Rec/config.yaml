@@ -1,0 +1,66 @@
+# config.yaml
+# 직접 하이퍼파라미터를 추가하여 관리할 수 있습니다.
+
+memo: |-
+    BERT4Rec 모델 학습 및 평가를 위한 설정 파일
+    필요에 따라 하이퍼파라미터를 조정하세요.
+
+checkpoint: 'saved/BERT4Rec/checkpoint/BERT4Rec.pt'  # 예측 시 불러올 모델 경로
+seed: 42                                   # 시드 고정
+predict: True
+device: cuda                               # 가능한 값: cpu, cuda, mps
+model: BERT4Rec                            # 모델 선택
+run_name: 'yusol : BERT4Rec'
+wandb: True                                # wandb 사용 여부
+wandb_project: 'lv2.movie_recommendation'  # wandb 프로젝트 이름
+predict_dir: 'saved/BERT4Rec/predict'
+
+model_args:     # BERT4Rec 모델에 해당하는 파라미터
+    BERT4Rec:
+        hidden_units: 50
+        num_heads: 1
+        num_layers: 2
+        max_len: 100
+        dropout_rate: 0.3
+        num_workers: 1
+
+dataset:
+    data_path: data/train/               # 데이터셋 경로
+    ratio: 0.1                             # Train / Validation / Test split
+    test_prop: 0.2                         # Test 비율
+
+dataloader:
+    data_path: data/train  # 데이터 load 경로
+    batch_size: 128                       # 배치 사이즈
+    shuffle: True                         # 학습 데이터 셔플 여부
+    num_workers: 0                        # 멀티프로세서 수
+
+optimizer:
+    type: Adam                            # 사용 가능한 optimizer: torch.optim.Optimizer
+    args:
+        lr: 0.001                         # 학습률
+        weight_decay: 0.0001              # L2 정규화 가중치
+        amsgrad: False                    # Adam 등 / amsgrad 사용 여부
+
+lr_scheduler:
+    use: True                             # True: 사용 / False: 사용하지 않음
+    type: StepLR                          # 사용 가능한 lr_scheduler
+    args:
+        step_size: 10                     # 학습률 감소 주기
+        gamma: 0.1                        # 학습률 감소 비율
+
+train:
+    epochs: 1                           # 학습 에폭 수
+    log_dir: saved/BERT4Rec/log              # 로그 저장 경로
+    ckpt_dir: saved/BERT4Rec/checkpoint      # 모델 저장 경로
+    submit_dir: saved/BERT4Rec/submit        # 예측 저장 경로
+    predict_dir: saved/BERT4Rec/predict         # matrix 저장 경로 # add
+
+    save_best_model: True                 # True: val_loss가 최소인 모델 저장
+    resume: False                         # 이어서 학습할 경우 True
+    resume_path: saved/BERT4Rec/checkpoint/BERT4Rec.pt   # 이어서 학습할 모델 경로
+
+other_params:
+    args:
+        mask_prob: 0.15                   # 마스킹 확률
+        log_interval: 100                 # 로그 간격

@@ -1,0 +1,9 @@
+.data/**
+output/
+__pycache__
+saved/
+log/
+log_tensorboard/
+.cache/
+wandb/
+.*

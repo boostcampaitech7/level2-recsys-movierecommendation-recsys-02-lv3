@@ -1,0 +1,29 @@
+# 실행할 모델의 정보를 입력하는 config
+# 사용할 모델과 해당 모델명을 불러옵니다.
+
+seed: 0            # 시드 고정
+device: cuda
+predict_dir: saved/
+submit_dir: saved/submit/
+
+model_names:
+    MultiVAE:
+      name: 'MultiVAE'
+    EASE:
+      name: 'EASE'
+    RecBole:
+      name: 'RecBole'
+    MF:
+      name: 'MF'
+    BERT4Rec:
+      name: 'BERT4Rec'
+    EASER:
+      name: 'EASER'   
+    BERT4Rec_with_side_info:
+      name: 'BERT4Rec_with_side_info'
+    RecVAE:
+      name: 'RecVAE'
+    DeepFM:
+      name: 'DeepFM'
+    SASRec:
+      name: 'SASRec'
